@@ -26,8 +26,6 @@ async def welcome():
 @app.get("/health")
 async def health_check(session: AsyncSession = Depends(get_async_session)):
     try:
-        if random() > 0.5:
-            raise Exception("Random error")
         await session.execute(text("SELECT 1"))
         return {"status": "healthy"}
     except Exception as e:
