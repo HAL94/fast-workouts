@@ -2,6 +2,7 @@ import abc
 from typing import Any, ClassVar, Generic, Optional, TypeVar
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from ..core.database.base_model import Base
 from faker import Faker
@@ -19,37 +20,41 @@ class BaseSeed(abc.ABC, Generic[T]):
     def __init__(self, session: Session):
         self.session = session
         self.faker = Faker()
+        self.data: list[T] = []
 
     def upsert_record(
-        self, data: dict[str, Any], unique_field: str = "id"
+        self,
+        data: dict[str, Any],
+        unique_fields: list[str] = ["id"],
     ) -> T:
         """
         Creates or updates a record in the database
         """
-        
-        if getattr(self.model, unique_field) is None:
-            raise ValueError("Unique field is not valid")
-            
-        
-        print(f"Received data: {data}")
-        
-        stmt = pg_insert(self.model).values(**data)
+        try:
+            if getattr(self.model, unique_fields[0]) is None:
+                raise ValueError("Unique field is not valid")
 
-        stmt = stmt.on_conflict_do_nothing(
-            index_elements=[getattr(self.model, unique_field)],
-        ).returning(self.model)
 
-        created_record = self.session.scalar(stmt)
-        
-        if not created_record:
-            return self.session.scalar(
-                self.session.query(self.model).filter_by(**data)
-            )
+            stmt = pg_insert(self.model).values(**data)
 
-        self.session.commit()
+            stmt = stmt.on_conflict_do_nothing(
+                index_elements=[*unique_fields],
+            ).returning(self.model)
 
-        return created_record
+            created_record = self.session.scalar(stmt)
 
+            if not created_record:
+                print(f"Data already exists: {data}")
+                return self.session.scalar(
+                    self.session.query(self.model).filter_by(**data)
+                )
+            print(f"Inserted data: {data}")
+
+            self.session.commit()
+
+            return created_record
+        except SQLAlchemyError:
+            return None
     @abc.abstractmethod
     def create_many(self, size: Optional[int] = 5, *args, **kwargs) -> list[T]:
         """

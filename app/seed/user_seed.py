@@ -23,9 +23,9 @@ class UserSeed(BaseSeed):
         records = []
         for _ in range(size):
             user_record = self.upsert_record(
-                self._create_user(), unique_field="email"
+                self._create_user(), unique_fields=["email"]
             )
-
-            records.append(user_record)
-
+            if user_record is not None:
+                records.append(user_record)
+        self.data = records
         return records

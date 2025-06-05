@@ -29,7 +29,11 @@ class ExerciseCategorySeed(BaseSeed):
         partial_list = self.exercise_categories[:size]
 
         for exercise_category in partial_list:
-            item = self.upsert_record({"name": exercise_category}, unique_field="name")
-            records.append(item)
-
+            item = self.upsert_record(
+                {"name": exercise_category}, unique_fields=["name"]
+            )
+            if item is not None:
+                records.append(item)
+                
+        self.data = records
         return records

@@ -11,6 +11,7 @@ class ExerciseSeed(BaseSeed):
     def __init__(self, session, category_seeder: ExerciseCategorySeed):
         self.category_seeder = category_seeder
         super().__init__(session=session)
+        
 
     def _create_exercise(self, exercise_name: str, category: ExerciseCategory) -> dict:
         return {
@@ -117,8 +118,9 @@ class ExerciseSeed(BaseSeed):
                     exercise_name=exercise, category=cat
                 )
                 exercise_record = self.upsert_record(
-                    data=exercise_data, unique_field="id"
+                    data=exercise_data, unique_fields=["name"]
                 )
-                records.append(exercise_record)
-
+                if exercise_record is not None:
+                    records.append(exercise_record)
+        self.data = records
         return records

@@ -1,8 +1,8 @@
-"""initial_models_exercise_categories_muscles
+"""tables_for_exercises_groups_categories
 
-Revision ID: 0a4395ccfe23
+Revision ID: eb508e11e4c5
 Revises: efdc60be6e59
-Create Date: 2025-06-05 17:45:40.020551
+Create Date: 2025-06-05 20:48:25.482020
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '0a4395ccfe23'
+revision: str = 'eb508e11e4c5'
 down_revision: Union[str, None] = 'efdc60be6e59'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -48,7 +48,8 @@ def upgrade() -> None:
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
     sa.ForeignKeyConstraint(['created_by'], ['users.id'], ),
     sa.ForeignKeyConstraint(['exercise_category_id'], ['exercise_categories.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('name')
     )
     op.create_table('exercise_muscle_groups',
     sa.Column('exercise_id', sa.Integer(), nullable=False),
@@ -59,7 +60,8 @@ def upgrade() -> None:
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
     sa.ForeignKeyConstraint(['exercise_id'], ['exercises.id'], ),
     sa.ForeignKeyConstraint(['muscle_group_id'], ['muscle_groups.id'], ),
-    sa.PrimaryKeyConstraint('exercise_id', 'muscle_group_id', 'id')
+    sa.PrimaryKeyConstraint('exercise_id', 'muscle_group_id', 'id'),
+    sa.UniqueConstraint('exercise_id', 'muscle_group_id', name='unique_exercise_muscle_group')
     )
     op.add_column('users', sa.Column('full_name', sa.String(), nullable=False))
     op.add_column('users', sa.Column('age', sa.Integer(), nullable=True))

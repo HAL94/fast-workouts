@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import override
 from sqlalchemy import DateTime, inspect
 from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped
 
@@ -20,3 +21,7 @@ class Base(DeclarativeBase):
     @classmethod
     def table(cls):
         return cls.__table__
+    
+    @override
+    def __repr__(self) -> str:
+        return str(self.dict())
