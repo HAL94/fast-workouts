@@ -1,4 +1,6 @@
 from typing import Optional
+
+from sqlalchemy.orm import Session
 from app.models import Exercise, ExerciseMuscleGroup, MuscleGroup
 from app.seed.base_seed import BaseSeed
 from app.seed.exercise_seed import ExerciseSeed
@@ -86,7 +88,7 @@ class ExerciseMuscleGroupSeed(BaseSeed):
 
     def __init__(
         self,
-        session,
+        session: Session,
         exercise_seeder: ExerciseSeed,
         muscle_group_seeder: MuscleGroupSeed,
     ):
@@ -107,6 +109,8 @@ class ExerciseMuscleGroupSeed(BaseSeed):
         self, size: Optional[int] = len(muscle_groups)
     ) -> list[ExerciseMuscleGroup]:
         records = []
+        if self.seeded:
+            return self.data
         seeded_exercises = self.exercise_seeder.create_many()
         seeded_muscle_groups = self.muscle_group_seeder.create_many()
         for exercise in seeded_exercises:
@@ -133,4 +137,5 @@ class ExerciseMuscleGroupSeed(BaseSeed):
                 if result is not None:
                     records.append(result)
         self.data = records
+        self.seeded = True
         return records

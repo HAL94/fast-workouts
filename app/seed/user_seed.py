@@ -28,4 +28,5 @@ class UserSeed(BaseSeed):
             if user_record is not None:
                 records.append(user_record)
         self.data = records
+        self.seeded = True
         return records

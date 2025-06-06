@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Optional
 from app.models import ExerciseCategory
 from app.seed.base_seed import BaseSeed
 
@@ -8,23 +8,25 @@ class ExerciseCategorySeed(BaseSeed):
 
     exercise_categories = [
         "Strength Training",
-        "Bodyweight Exercises",
         "Weightlifting (Free Weights)",
-        "Machine Exercises",
         "Compound Exercises",
+        "Powerlifting Focus",
+        "Bodyweight Exercises",
+        "Machine Exercises",
         "Isolation Exercises",
         "Core Strength",
-        "Powerlifting Focus",
         "Calisthenics",
     ]
 
-    def _create_exercise(self) -> ExerciseCategory:
-        pass
+    def _create_exercise_category(self, name: str) -> dict[str, Any]:
+        return {"name": name}
 
     def create_many(
         self, size: Optional[int] = len(exercise_categories)
     ) -> list[ExerciseCategory]:
         records = []
+        if self.seeded:
+            return self.data
 
         partial_list = self.exercise_categories[:size]
 
@@ -34,6 +36,7 @@ class ExerciseCategorySeed(BaseSeed):
             )
             if item is not None:
                 records.append(item)
-                
+
         self.data = records
+        self.seeded = True
         return records

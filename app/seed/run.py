@@ -1,3 +1,4 @@
+from typing import Any, Type
 from sqlalchemy import URL, create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from app.seed.exercise_category_seed import ExerciseCategorySeed
@@ -6,6 +7,8 @@ from app.seed.exercise_seed import ExerciseSeed
 from app.seed.muscle_group_seed import MuscleGroupSeed
 from app.seed.user_seed import UserSeed
 from app.core.config import settings
+import inspect
+
 
 DATABASE_URL = URL.create(
     drivername="postgresql",
@@ -30,26 +33,77 @@ def get_session(SessionLocal: sessionmaker[Session]):
         db.close()
 
 
+# constructs dependency graph
+SEED_DI = {}
+
+# constructs dependency resolver
+DI_RESOLVER = {
+    "Session": None,
+}
+
+
+def register_dependency(injection_cls: Type[Any]):
+    class_name = injection_cls.__name__
+    SEED_DI[class_name] = injection_cls
+
+
+def resolve_dependency(dependency_cls: Type[Any]):
+    dependencies = {}
+    dependency_name = dependency_cls.__name__
+    # print("Running for class", dependency_name)
+    if dependency_name not in SEED_DI:
+        raise ValueError(f"Dependency {dependency_name} not registered")
+    if dependency_name in DI_RESOLVER:
+        return DI_RESOLVER[dependency_name]
+
+    for key, param in dependency_inspector(dependency_cls):
+        if key == "self":
+            continue
+        if param.annotation is inspect.Parameter.empty:
+            raise ValueError(
+                f"Dependency {dependency_name} has a key {key} with empty annotation"
+            )
+
+        dep_name = param.annotation.__name__
+        if dep_name not in SEED_DI:
+            raise ValueError(f"Dependency {dep_name} not registered")
+
+        resolved_dep = resolve_dependency(SEED_DI[dep_name])
+        dependencies[key] = resolved_dep
+        # print("keyis", key, "class_target", dependency_cls, dependencies)
+
+    print(f"Resolve for: {dependency_name}", dependencies)
+    constructed_cls = dependency_cls(**dependencies)
+    DI_RESOLVER[dependency_name] = constructed_cls
+
+    return constructed_cls
+
+
+def dependency_inspector(cls: Type[Any]):
+    class_args_items = inspect.signature(cls.__init__).parameters.items()
+    return class_args_items
+
+
 def main():
     session: Session = next(get_session(sessionmaker(bind=engine)))
+    DI_RESOLVER["Session"] = session
 
-    user_seed = UserSeed(session=session)
-    muscle_group_seed = MuscleGroupSeed(session=session)
-    exercise_category_seed = ExerciseCategorySeed(session=session)
-    
-    exercise_seed = ExerciseSeed(
-        session=session, category_seeder=exercise_category_seed
-    )
-    exercise_muscle_group_seed = ExerciseMuscleGroupSeed(
-        session=session,
-        exercise_seeder=exercise_seed,
-        muscle_group_seeder=muscle_group_seed,
-    )
+    register_dependency(Session)
+    register_dependency(ExerciseCategorySeed)
+    register_dependency(ExerciseSeed)
+    register_dependency(MuscleGroupSeed)
+    register_dependency(ExerciseMuscleGroupSeed)
+    register_dependency(UserSeed)
 
-    user_seed.create_many()
-    exercise_muscle_group_seed.create_many()    
+    user_seeder = resolve_dependency(UserSeed)
+    exercise_muscle_group_seeder = resolve_dependency(ExerciseMuscleGroupSeed)
+
+    user_seeder.create_many()
+    exercise_muscle_group_seeder.create_many()
 
     print("Done!")
+
+    session.close()
 
 
 if __name__ == "__main__":

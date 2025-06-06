@@ -41,6 +41,8 @@ class MuscleGroupSeed(BaseSeed):
 
     def create_many(self, size: Optional[int] = 27) -> list[MuscleGroup]:
         records = []
+        if self.seeded:
+            return self.data
         partial_list = self.all_unique_muscle_groups[:size]
         for muscle_name in partial_list:
             muscle_group = self.upsert_record(
@@ -50,4 +52,5 @@ class MuscleGroupSeed(BaseSeed):
             if muscle_group is not None:
                 records.append(muscle_group)
         self.data = records
+        self.seeded = True
         return records

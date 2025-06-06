@@ -21,6 +21,7 @@ class BaseSeed(abc.ABC, Generic[T]):
         self.session = session
         self.faker = Faker()
         self.data: list[T] = []
+        self.seeded = False
 
     def upsert_record(
         self,

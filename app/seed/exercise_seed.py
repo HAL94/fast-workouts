@@ -1,5 +1,7 @@
 from typing import Optional
 
+from sqlalchemy.orm import Session
+
 from app.models import Exercise, ExerciseCategory
 from app.seed.base_seed import BaseSeed
 from app.seed.exercise_category_seed import ExerciseCategorySeed
@@ -8,10 +10,9 @@ from app.seed.exercise_category_seed import ExerciseCategorySeed
 class ExerciseSeed(BaseSeed):
     __model__ = Exercise
 
-    def __init__(self, session, category_seeder: ExerciseCategorySeed):
+    def __init__(self, session: Session, category_seeder: ExerciseCategorySeed):
         self.category_seeder = category_seeder
         super().__init__(session=session)
-        
 
     def _create_exercise(self, exercise_name: str, category: ExerciseCategory) -> dict:
         return {
@@ -110,6 +111,8 @@ class ExerciseSeed(BaseSeed):
         self, size: Optional[int] = len(exercises_by_categories.keys())
     ) -> list[Exercise]:
         records = []
+        if self.seeded:
+            return self.data
         categories = self.category_seeder.create_many()
         for cat in categories:
             exercises = self.exercises_by_categories[cat.name]
@@ -123,4 +126,5 @@ class ExerciseSeed(BaseSeed):
                 if exercise_record is not None:
                     records.append(exercise_record)
         self.data = records
+        self.seeded = True
         return records
