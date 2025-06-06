@@ -1,5 +1,5 @@
 import abc
-from typing import Any, ClassVar, Generic, Optional, TypeVar
+from typing import Any, ClassVar, Generic, TypeVar
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from sqlalchemy.exc import SQLAlchemyError
@@ -8,7 +8,6 @@ from ..core.database.base_model import Base
 from faker import Faker
 
 T = TypeVar("T", bound=Base)
-
 
 class BaseSeed(abc.ABC, Generic[T]):
     __model__: ClassVar[T]
@@ -43,7 +42,7 @@ class BaseSeed(abc.ABC, Generic[T]):
             ).returning(self.model)
 
             created_record = self.session.scalar(stmt)
-
+            
             if not created_record:
                 print(f"Data already exists: {data}")
                 return self.session.scalar(
@@ -51,13 +50,14 @@ class BaseSeed(abc.ABC, Generic[T]):
                 )
             print(f"Inserted data: {data}")
 
-            self.session.commit()
 
             return created_record
         except SQLAlchemyError:
+            self.session.rollback()
             return None
+        
     @abc.abstractmethod
-    def create_many(self, size: Optional[int] = 5, *args, **kwargs) -> list[T]:
+    def create_many(self, *args, **kwargs) -> list[T]:
         """
         Creates multiple records in the database
         """

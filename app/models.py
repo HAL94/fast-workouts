@@ -27,7 +27,7 @@ class ExerciseMuscleGroup(Base):
             "exercise_id", "muscle_group_id", name="unique_exercise_muscle_group"
         ),
     )
-    
+
     is_primary_muscle: Mapped[bool] = mapped_column(nullable=False)
     # relationships
     exercise: Mapped["Exercise"] = relationship(
@@ -39,11 +39,35 @@ class ExerciseMuscleGroup(Base):
 
 
 class ExerciseCategory(Base):
+    __tablename__ = "exercise_categories"
+
+    # relationships
+    exercise_id: Mapped[int] = mapped_column(
+        ForeignKey("exercises.id"), primary_key=True
+    )
+    exercise: Mapped["Exercise"] = relationship(
+        back_populates="exercise_category_association"
+    )
+    category_id: Mapped[int] = mapped_column(
+        ForeignKey("categories.id"), primary_key=True
+    )
+    category: Mapped["Category"] = relationship(
+        back_populates="exercise_category_association"
+    )
+    
+    __table_args__ = (
+        UniqueConstraint(
+            "exercise_id", "category_id", name="unique_exercise_category"
+        ),
+    )
+
+
+class Category(Base):
     """
     Defines categories for exercises (e.g., 'Strength', 'Cardio').
     """
 
-    __tablename__ = "exercise_categories"
+    __tablename__ = "categories"
 
     id: Mapped[int] = mapped_column(
         Integer, primary_key=True
@@ -52,14 +76,17 @@ class ExerciseCategory(Base):
         String(50), unique=True, nullable=False
     )  # Added length and unique constraint
 
-    # Bidirectional relationship with Exercise: one category has many exercises
+    exercise_category_association: Mapped[list["ExerciseCategory"]] = relationship(
+        back_populates="category"
+    )
     exercises: Mapped[list["Exercise"]] = relationship(
-        back_populates="exercise_category",
-        cascade="all, delete-orphan",  # If a category is deleted, delete associated exercises (consider implications)
+        secondary="exercise_categories",
+        back_populates="categories",
+        viewonly=True,
     )
 
     def __repr__(self) -> str:
-        return f"<ExerciseCategory(id={self.id}, name='{self.name}')>"
+        return f"<Category(id={self.id}, name='{self.name}')>"
 
 
 class MuscleGroup(Base):
@@ -87,20 +114,19 @@ class Exercise(Base):
     created_by: Mapped[int] = mapped_column(
         ForeignKey("users.id"), nullable=True, default=None
     )
-
-    # relationships
-    exercise_category_id: Mapped[int] = mapped_column(
-        ForeignKey("exercise_categories.id")
-    )
-    exercise_category: Mapped["ExerciseCategory"] = relationship(
-        back_populates="exercises"
-    )
-
     exercise_muscle_associations: Mapped[list["ExerciseMuscleGroup"]] = relationship(
+        back_populates="exercise"
+    )
+    exercise_category_association: Mapped[list["ExerciseCategory"]] = relationship(
         back_populates="exercise"
     )
     muscle_groups: Mapped[list["MuscleGroup"]] = relationship(
         secondary="exercise_muscle_groups",  # Specifies the association table
         back_populates="exercises",  # Points to the 'exercises' relationship on the MuscleGroup model
+        viewonly=True,  # Prevents SQLAlchemy from trying to write to the secondary table directly
+    )
+    categories: Mapped[list["Category"]] = relationship(
+        secondary="exercise_categories",  # Specifies the association table
+        back_populates="exercises",  # Points to the 'exercises' relationship on the Category model
         viewonly=True,  # Prevents SQLAlchemy from trying to write to the secondary table directly
     )

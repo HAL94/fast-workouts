@@ -1,7 +1,9 @@
-from typing import Any, Type
+from typing import Any, Type, TypeVar
 from sqlalchemy import URL, create_engine
 from sqlalchemy.orm import Session, sessionmaker
-from app.seed.exercise_category_seed import ExerciseCategorySeed
+from app.seed.base_seed import BaseSeed
+from app.seed.category_seed import CategorySeed
+from app.seed.exercise_category_seed import ExerciseCategoryMapSeed
 from app.seed.exercise_muscle_group_seed import ExerciseMuscleGroupSeed
 from app.seed.exercise_seed import ExerciseSeed
 from app.seed.muscle_group_seed import MuscleGroupSeed
@@ -26,11 +28,9 @@ def get_session(SessionLocal: sessionmaker[Session]):
     db = SessionLocal()
     try:
         yield db
-    except Exception as e:
-        db.rollback()
+    except Exception as e:        
         print(f"an error occured: {e}")
-    finally:
-        db.close()
+    
 
 
 # constructs dependency graph
@@ -46,8 +46,9 @@ def register_dependency(injection_cls: Type[Any]):
     class_name = injection_cls.__name__
     SEED_DI[class_name] = injection_cls
 
+T = TypeVar("T", bound=BaseSeed)
 
-def resolve_dependency(dependency_cls: Type[Any]):
+def resolve_dependency(dependency_cls: Type[T]) -> T:
     dependencies = {}
     dependency_name = dependency_cls.__name__
     # print("Running for class", dependency_name)
@@ -72,7 +73,7 @@ def resolve_dependency(dependency_cls: Type[Any]):
         dependencies[key] = resolved_dep
         # print("keyis", key, "class_target", dependency_cls, dependencies)
 
-    print(f"Resolve for: {dependency_name}", dependencies)
+    print(f"Resolved for: {dependency_name}", dependencies)
     constructed_cls = dependency_cls(**dependencies)
     DI_RESOLVER[dependency_name] = constructed_cls
 
@@ -86,24 +87,26 @@ def dependency_inspector(cls: Type[Any]):
 
 def main():
     session: Session = next(get_session(sessionmaker(bind=engine)))
+    
     DI_RESOLVER["Session"] = session
 
     register_dependency(Session)
-    register_dependency(ExerciseCategorySeed)
+    register_dependency(CategorySeed)
     register_dependency(ExerciseSeed)
+    register_dependency(ExerciseCategoryMapSeed)
     register_dependency(MuscleGroupSeed)
     register_dependency(ExerciseMuscleGroupSeed)
     register_dependency(UserSeed)
-
-    user_seeder = resolve_dependency(UserSeed)
+    
+    user_seed = resolve_dependency(UserSeed)
     exercise_muscle_group_seeder = resolve_dependency(ExerciseMuscleGroupSeed)
-
-    user_seeder.create_many()
+    exercise_category_seeder = resolve_dependency(ExerciseCategoryMapSeed)
+    
+    user_seed.create_many()
+    exercise_category_seeder.create_many()
     exercise_muscle_group_seeder.create_many()
 
     print("Done!")
-
-    session.close()
 
 
 if __name__ == "__main__":

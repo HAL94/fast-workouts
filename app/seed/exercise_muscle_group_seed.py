@@ -1,90 +1,15 @@
 from typing import Optional
 
 from sqlalchemy.orm import Session
-from app.models import Exercise, ExerciseMuscleGroup, MuscleGroup
+from app.models import ExerciseMuscleGroup
 from app.seed.base_seed import BaseSeed
+from app.seed.constants import exercise_name_to_id, muscle_group_to_id, muscle_groups
 from app.seed.exercise_seed import ExerciseSeed
 from app.seed.muscle_group_seed import MuscleGroupSeed
 
 
 class ExerciseMuscleGroupSeed(BaseSeed):
     __model__ = ExerciseMuscleGroup
-
-    muscle_groups = {
-        "Squat": [
-            "Quadriceps",
-            "Hamstrings",
-            "Glutes",
-            "Adductors",
-            "Calves",
-            "Lower Back",
-            "Core",
-        ],
-        "Deadlift": [
-            "Hamstrings",
-            "Glutes",
-            "Lower Back",
-            "Trapezius",
-            "Forearms",
-            "Core",
-            "Quadriceps",
-        ],
-        "Bench Press": ["Pectoralis Major", "Anterior Deltoids", "Triceps"],
-        "Overhead Press (Shoulder Press)": [
-            "Anterior Deltoids",
-            "Lateral Deltoids",
-            "Triceps",
-            "Upper Trapezius",
-            "Core",
-        ],
-        "Bent-Over Row": [
-            "Latissimus Dorsi",
-            "Rhomboids",
-            "Trapezius",
-            "Posterior Deltoids",
-            "Biceps",
-            "Forearms",
-        ],
-        "Pull-up/Chin-up": [
-            "Latissimus Dorsi",
-            "Biceps",
-            "Forearms",
-            "Rhomboids",
-            "Trapezius",
-        ],
-        "Lunges": ["Quadriceps", "Hamstrings", "Glutes", "Calves", "Core"],
-        "Leg Press": ["Quadriceps", "Hamstrings", "Glutes", "Calves"],
-        "Leg Curl": ["Hamstrings"],
-        "Leg Extension": ["Quadriceps"],
-        "Calf Raises": ["Gastrocnemius", "Soleus"],
-        "Bicep Curl": ["Biceps", "Brachialis", "Brachioradialis"],
-        "Tricep Extension": ["Triceps"],
-        "Lateral Raise": ["Lateral Deltoids"],
-        "Front Raise": ["Anterior Deltoids"],
-        "Rear Delt Fly": ["Posterior Deltoids", "Rhomboids", "Trapezius"],
-        "Shrugs": ["Trapezius"],
-        "Plank": [
-            "Rectus Abdominis",
-            "Obliques",
-            "Transverse Abdominis",
-            "Lower Back",
-            "Shoulders",
-            "Glutes",
-        ],
-        "Crunches/Sit-ups": ["Rectus Abdominis", "Obliques"],
-        "Russian Twists": ["Obliques", "Rectus Abdominis", "Transverse Abdominis"],
-        "Good Mornings": ["Hamstrings", "Glutes", "Lower Back"],
-        "Face Pulls": ["Posterior Deltoids", "Rhomboids", "Trapezius", "Rotator Cuff"],
-        "Glute Bridge/Hip Thrust": ["Glutes", "Hamstrings"],
-        "Dumbbell Row": [
-            "Latissimus Dorsi",
-            "Rhomboids",
-            "Trapezius",
-            "Posterior Deltoids",
-            "Biceps",
-            "Forearms",
-        ],
-    }
 
     def __init__(
         self,
@@ -96,14 +21,16 @@ class ExerciseMuscleGroupSeed(BaseSeed):
         self.muscle_group_seeder = muscle_group_seeder
         super().__init__(session=session)
 
-    def _create_exercise_muscle_group(
-        self, exercise: Exercise, muscle_group: MuscleGroup, is_primary_muscle: bool
-    ) -> dict:
-        return {
-            "exercise_id": exercise.id,
-            "muscle_group_id": muscle_group.id,
+    def create_exercise_muscle_group(
+        self, exercise_id: int, muscle_group_id: int, is_primary_muscle: bool
+    ) -> ExerciseMuscleGroup | None:
+        exercise_group_data = {
+            "exercise_id": exercise_id,
+            "muscle_group_id": muscle_group_id,
             "is_primary_muscle": is_primary_muscle,
         }
+        return self.upsert_record(exercise_group_data, unique_fields=["exercise_id", "muscle_group_id"])
+        
 
     def create_many(
         self, size: Optional[int] = len(muscle_groups)
@@ -111,31 +38,25 @@ class ExerciseMuscleGroupSeed(BaseSeed):
         records = []
         if self.seeded:
             return self.data
-        seeded_exercises = self.exercise_seeder.create_many()
-        seeded_muscle_groups = self.muscle_group_seeder.create_many()
-        for exercise in seeded_exercises:
-            if exercise is None:
-                continue
-            
-            muscle_groups_for_exercise = self.muscle_groups[exercise.name]
-            matching_muscle_groups = [
-                mg
-                for mg in seeded_muscle_groups
-                if mg.muscle_target in muscle_groups_for_exercise
-            ]
-            for matched_muscle in matching_muscle_groups:
-                exercise_muscle_group_data = self._create_exercise_muscle_group(
-                    exercise=exercise,
-                    muscle_group=matched_muscle,
-                    is_primary_muscle=matched_muscle.muscle_target
-                    == muscle_groups_for_exercise[0],
+
+        self.exercise_seeder.create_many()
+        self.muscle_group_seeder.create_many()
+        self.session.commit()
+
+        for exercise_name in muscle_groups.keys():
+            muscle_groups_per_exercise = muscle_groups[exercise_name]
+            for muscle_group in muscle_groups_per_exercise:
+                muscle_group_id = muscle_group_to_id[muscle_group]
+                exercise_id = exercise_name_to_id[exercise_name]
+                exercise_muscle_group_data = self.create_exercise_muscle_group(
+                    exercise_id=exercise_id,
+                    muscle_group_id=muscle_group_id,
+                    is_primary_muscle=muscle_group == muscle_groups_per_exercise[0],
                 )
-                result = self.upsert_record(
-                    data=exercise_muscle_group_data,
-                    unique_fields=["exercise_id", "muscle_group_id"],
-                )
-                if result is not None:
-                    records.append(result)
+                if exercise_muscle_group_data is not None:
+                    records.append(exercise_muscle_group_data)
+
+        self.session.commit()
         self.data = records
         self.seeded = True
         return records

@@ -11,7 +11,7 @@ class UserSeed(BaseSeed):
     def _create_hashed_password(self, password: str) -> str:
         return create_hashed_pw(password)
 
-    def _create_user(self) -> dict:
+    def create_user(self) -> dict:
         return {
             "full_name": self.faker.name(),
             "email": self.faker.email(),
@@ -23,7 +23,7 @@ class UserSeed(BaseSeed):
         records = []
         for _ in range(size):
             user_record = self.upsert_record(
-                self._create_user(), unique_fields=["email"]
+                self.create_user(), unique_fields=["email"]
             )
             if user_record is not None:
                 records.append(user_record)
