@@ -22,6 +22,18 @@ class BaseSeed(abc.ABC, Generic[T]):
         self.data: list[T] = []
         self.seeded = False
 
+    def create_one(self, data: dict[str, Any]) -> T:
+        """
+        Creates a record in the database
+        """
+        try:
+            record = self.model(**data)
+            self.session.add(record)
+            return record
+        except SQLAlchemyError:
+            self.session.rollback()
+            return None
+        
     def upsert_record(
         self,
         data: dict[str, Any],
@@ -33,7 +45,6 @@ class BaseSeed(abc.ABC, Generic[T]):
         try:
             if getattr(self.model, unique_fields[0]) is None:
                 raise ValueError("Unique field is not valid")
-
 
             stmt = pg_insert(self.model).values(**data)
 
@@ -52,7 +63,8 @@ class BaseSeed(abc.ABC, Generic[T]):
 
 
             return created_record
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            print(f"Error: {e}")
             self.session.rollback()
             return None
         

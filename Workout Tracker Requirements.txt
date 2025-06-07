@@ -1,0 +1,102 @@
+User
+- user_id Primary
+- full name
+- age
+- email
+- created_at
+- updated_at
+- hashed_password
+
+Exercise
+- id Primary
+- name
+- description
+- category
+- muscle_group
+- is_custom (True, if made by user or null if system-generated)
+- created_by (if is_custom is True, will refer to user_id, else nullable)
+
+WorkoutPlan
+- plan_id: ID Primary
+- user_id: ForginKey
+- title (Leg plan)
+- description (Leg day workout)
+- status (active, idle, coming_soon)
+- comments
+
+
+WorkoutPlanSchedule
+- schedule_id ID Primary
+- user_id ForginKey
+- plan_id ForignKey
+- start_time
+- end_time
+- remind_before
+
+
+WorkoutSession
+- session_id: ID Primary
+- user_id: ForeignKey
+- plan_id: ForeignKey
+- title: String, nullable
+- schedule_id: ForgienKey nullable
+- started_at: Timestamp, nullable
+- ended_at: Timestamp, nullable
+- duration_minutes: Integer, nullable
+- status (active, idle, coming_soon)
+- session_comments
+- created_at
+- updated_at
+
+
+WorkoutExercisePlan
+- id: ID
+- exercise_id: ID ForigenKey
+- plan_id: ID ForigenKey
+- order_in_plan: number
+- target_reps: number
+- target_sets: number
+- target_weights: number
+- target_duration_minutes: number, nullable
+- notes
+
+WorkoutSessionResult
+- id: ID
+- workout_exercise_plan_id: ID ForigenKey
+- exercise_id: ID ForigenKey
+- plan_id: ID ForgienKey
+- session_id: ID ForgienKey
+- reps_achieved
+- sets_achieved
+- total_weight_lifted (sets * reps * weight)
+- created_at
+- updated_at
+
+
+(OPTIONAL, LEAVE FOR LATER)
+WorkoutSessionAnalysis
+- id: ID PrimaryKey
+- workout_session_result_id: ID ForignKey
+- strength_analysis: Number, nullable (Lifting more weight for the same exercise over time)
+- reps_weight_analysis: Number, nullable (Performing more repetitions with a given weight)
+- sets_weight_reps_analysis: Number, nullable (Completing more sets of an exercise with the same weight or repetitions)
+
+
+Workout Management
+
+Users will be able to create their workout plans. 
+Workout plans should consist of multiple exercises, each with a set number of repetitions, sets, and weights. 
+Users should be able to update and delete their workout plans. 
+Additionally, users should be able to schedule workouts for specific dates and times.
+
+    Create Workout: Allow users to create workouts composed of multiple exercises.
+    Update Workout: Allow users to update workouts and add comments.
+    Delete Workout: Allow users to delete workouts.
+    Schedule Workouts: Allow users to schedule workouts for specific dates and times.
+    List Workouts: List active or pending workouts sorted by date and time.
+    Generate Reports: Generate reports on past workouts and progress.
+
+
+
+
+

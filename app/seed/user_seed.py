@@ -19,7 +19,7 @@ class UserSeed(BaseSeed):
             "hashed_password": self._create_hashed_password("123456"),
         }
 
-    def create_many(self, size: Optional[int] = 5) -> list[User]:
+    def create_many(self, size: Optional[int] = 1) -> list[User]:
         records = []
         for _ in range(size):
             user_record = self.upsert_record(
@@ -27,6 +27,7 @@ class UserSeed(BaseSeed):
             )
             if user_record is not None:
                 records.append(user_record)
+        self.session.commit()
         self.data = records
         self.seeded = True
         return records
