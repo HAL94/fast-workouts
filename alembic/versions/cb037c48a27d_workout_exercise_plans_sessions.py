@@ -1,8 +1,8 @@
 """workout_exercise_plans_sessions
 
-Revision ID: 34c8bd959dec
+Revision ID: cb037c48a27d
 Revises: 07185670e2c8
-Create Date: 2025-06-07 12:15:17.090525
+Create Date: 2025-06-08 12:12:54.268789
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '34c8bd959dec'
+revision: str = 'cb037c48a27d'
 down_revision: Union[str, None] = '07185670e2c8'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -45,7 +45,7 @@ def upgrade() -> None:
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
     sa.ForeignKeyConstraint(['exercise_id'], ['exercises.id'], ),
-    sa.ForeignKeyConstraint(['workout_plan_id'], ['workout_plans.id'], ),
+    sa.ForeignKeyConstraint(['workout_plan_id'], ['workout_plans.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('exercise_id', 'workout_plan_id', name='unique_exercise_plan')
     )
@@ -59,7 +59,7 @@ def upgrade() -> None:
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
-    sa.ForeignKeyConstraint(['workout_plan_id'], ['workout_plans.id'], ),
+    sa.ForeignKeyConstraint(['workout_plan_id'], ['workout_plans.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_workout_plan_schedules_end_time'), 'workout_plan_schedules', ['end_time'], unique=False)
@@ -72,14 +72,14 @@ def upgrade() -> None:
     sa.Column('status', sa.String(length=50), nullable=True),
     sa.Column('session_comments', sa.String(length=255), nullable=True),
     sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('workout_plan_id', sa.Integer(), nullable=False),
+    sa.Column('workout_plan_id', sa.Integer(), nullable=True),
     sa.Column('schedule_id', sa.Integer(), nullable=True),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
     sa.ForeignKeyConstraint(['schedule_id'], ['workout_plan_schedules.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
-    sa.ForeignKeyConstraint(['workout_plan_id'], ['workout_plans.id'], ),
+    sa.ForeignKeyConstraint(['workout_plan_id'], ['workout_plans.id'], ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('workout_session_results',
@@ -87,17 +87,17 @@ def upgrade() -> None:
     sa.Column('sets_achieved', sa.Integer(), nullable=False),
     sa.Column('weights_achieved', sa.Float(), nullable=False),
     sa.Column('total_weight_lifted', sa.Float(), nullable=True),
-    sa.Column('workout_exercise_plan_id', sa.Integer(), nullable=False),
+    sa.Column('workout_exercise_plan_id', sa.Integer(), nullable=True),
     sa.Column('exercise_id', sa.Integer(), nullable=False),
-    sa.Column('workout_plan_id', sa.Integer(), nullable=False),
+    sa.Column('workout_plan_id', sa.Integer(), nullable=True),
     sa.Column('workout_session_id', sa.Integer(), nullable=False),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
     sa.ForeignKeyConstraint(['exercise_id'], ['exercises.id'], ),
-    sa.ForeignKeyConstraint(['workout_exercise_plan_id'], ['workout_exercise_plans.id'], ),
-    sa.ForeignKeyConstraint(['workout_plan_id'], ['workout_plans.id'], ),
-    sa.ForeignKeyConstraint(['workout_session_id'], ['workout_sessions.id'], ),
+    sa.ForeignKeyConstraint(['workout_exercise_plan_id'], ['workout_exercise_plans.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['workout_plan_id'], ['workout_plans.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['workout_session_id'], ['workout_sessions.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     # ### end Alembic commands ###

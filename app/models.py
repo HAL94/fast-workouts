@@ -3,7 +3,6 @@ import enum
 from sqlalchemy import ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database.base_model import Base
-from sqlalchemy import Enum
 
 
 class WorkoutSessionStatus(str, enum.Enum):
@@ -172,7 +171,8 @@ class WorkoutPlan(Base):
     user: Mapped["User"] = relationship(back_populates="workout_plans")
 
     workout_plan_schedules: Mapped[list["WorkoutPlanSchedule"]] = relationship(
-        back_populates="workout_plan"
+        back_populates="workout_plan",
+        cascade="all, delete-orphan",
     )
 
     workout_plan_sessions: Mapped[list["WorkoutSession"]] = relationship(
@@ -180,7 +180,7 @@ class WorkoutPlan(Base):
     )
 
     workout_exercise_plans: Mapped[list["WorkoutExercisePlan"]] = relationship(
-        back_populates="workout_plan"
+        back_populates="workout_plan", cascade="all, delete-orphan"
     )
 
 
@@ -195,7 +195,9 @@ class WorkoutPlanSchedule(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     user: Mapped["User"] = relationship(back_populates="workout_plan_schedules")
 
-    workout_plan_id: Mapped[int] = mapped_column(ForeignKey("workout_plans.id"))
+    workout_plan_id: Mapped[int] = mapped_column(
+        ForeignKey("workout_plans.id", ondelete="CASCADE")
+    )
     workout_plan: Mapped["WorkoutPlan"] = relationship(
         back_populates="workout_plan_schedules"
     )
@@ -216,7 +218,7 @@ class WorkoutSession(Base):
     user: Mapped["User"] = relationship(back_populates="workout_plan_sessions")
 
     workout_plan_id: Mapped["WorkoutPlan"] = mapped_column(
-        ForeignKey("workout_plans.id")
+        ForeignKey("workout_plans.id", ondelete="SET NULL"), nullable=True
     )
     workout_plan: Mapped["WorkoutPlan"] = relationship(
         back_populates="workout_plan_sessions"
@@ -226,7 +228,7 @@ class WorkoutSession(Base):
         ForeignKey("workout_plan_schedules.id"), nullable=True
     )
     workout_session_result: Mapped["WorkoutSessionResult"] = relationship(
-        back_populates="workout_session"
+        back_populates="workout_session", cascade="all, delete-orphan"
     )
 
 
@@ -244,7 +246,9 @@ class WorkoutExercisePlan(Base):
     exercise_id: Mapped[int] = mapped_column(ForeignKey("exercises.id"))
     exercise: Mapped["Exercise"] = relationship(back_populates="workout_exercise_plans")
 
-    workout_plan_id: Mapped[int] = mapped_column(ForeignKey("workout_plans.id"))
+    workout_plan_id: Mapped[int] = mapped_column(
+        ForeignKey("workout_plans.id", ondelete="CASCADE")
+    )
     workout_plan: Mapped["WorkoutPlan"] = relationship(
         back_populates="workout_exercise_plans"
     )
@@ -264,12 +268,16 @@ class WorkoutSessionResult(Base):
 
     # relationships
     workout_exercise_plan_id: Mapped[int] = mapped_column(
-        ForeignKey("workout_exercise_plans.id")
+        ForeignKey("workout_exercise_plans.id", ondelete="SET NULL"), nullable=True
     )
     exercise_id: Mapped[int] = mapped_column(ForeignKey("exercises.id"))
-    workout_plan_id: Mapped[int] = mapped_column(ForeignKey("workout_plans.id"))
+    workout_plan_id: Mapped[int] = mapped_column(
+        ForeignKey("workout_plans.id", ondelete="SET NULL"), nullable=True
+    )
 
-    workout_session_id: Mapped[int] = mapped_column(ForeignKey("workout_sessions.id"))
+    workout_session_id: Mapped[int] = mapped_column(
+        ForeignKey("workout_sessions.id", ondelete="CASCADE")
+    )
     workout_session: Mapped["WorkoutSession"] = relationship(
         back_populates="workout_session_result"
     )
