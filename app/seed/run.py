@@ -103,7 +103,8 @@ def main():
     register_dependency(MuscleGroupSeed)
     register_dependency(ExerciseMuscleGroupSeed)
     register_dependency(UserSeed)    
-    # new models
+    
+    # user-dependent models
     register_dependency(WorkoutPlanSeed) 
     register_dependency(WorkoutPlanScheduleSeed)
     register_dependency(WorkoutSessionSeed)

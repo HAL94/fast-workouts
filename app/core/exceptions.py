@@ -72,3 +72,12 @@ class InternalFailureException(AppException):
         super().__init__(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, message=message
         )
+
+
+class NotFoundException(AppException):
+    """
+    Base exception for not found errors.
+    """
+
+    def __init__(self, message: str = "Resource not found"):
+        super().__init__(status_code=status.HTTP_404_NOT_FOUND, message=message)

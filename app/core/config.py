@@ -22,3 +22,10 @@ class AppSettings(PostgresSettings, JwtSettings):
 
 
 settings = AppSettings()
+def get_settings() -> AppSettings:
+    global settings
+    if settings is None:
+        settings = AppSettings()
+    return settings
+
+

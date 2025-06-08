@@ -2,7 +2,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import AsyncGenerator
 
-from sqlalchemy.orm import Session, sessionmaker
 from app.core.database.async_session_maker import AsyncSessionMaker
 
 
