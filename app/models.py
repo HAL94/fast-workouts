@@ -173,7 +173,7 @@ class WorkoutPlan(Base):
     )
 
     workout_exercise_plans: Mapped[list["WorkoutExercisePlan"]] = relationship(
-        back_populates="workout_plan", cascade="all, delete-orphan", lazy="selectin"
+        back_populates="workout_plan", cascade="all, delete-orphan"
     )
 
 class WorkoutPlanSchedule(Base):
@@ -245,7 +245,7 @@ class WorkoutExercisePlan(Base):
     )
     
     workout_exercise_set_plans: Mapped[list["WorkoutExerciseSetPlan"]] = relationship(
-        back_populates="workout_exercise_plan", cascade="all, delete-orphan", lazy="selectin" 
+        back_populates="workout_exercise_plan", cascade="all, delete-orphan"
     )
     
     workout_exercise_results: Mapped[list["WorkoutSessionExerciseResult"]] = relationship(
