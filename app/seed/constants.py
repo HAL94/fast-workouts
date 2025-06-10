@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Any
 
+now = datetime.now()
 # --- Categories Data ---
 # Represents exercise categories
 exercise_categories: list[dict[str, Any]] = [
@@ -271,9 +272,7 @@ workout_exercise_plans_data: list[dict[str, Any]] = [
         "workout_plan_id": 1,
         "exercise_id": 1,  # Assumed existing Exercise: Squat
         "order_in_plan": 1,
-        "target_reps": "5",
         "target_sets": 3,
-        "target_weights": 100,  # kg
         "target_duration_minutes": None,
         "notes": "Ensure proper depth and core engagement.",
     },
@@ -282,9 +281,7 @@ workout_exercise_plans_data: list[dict[str, Any]] = [
         "workout_plan_id": 1,
         "exercise_id": 2,  # Assumed existing Exercise: Bench Press
         "order_in_plan": 2,
-        "target_reps": "8",
         "target_sets": 3,
-        "target_weights": 70,  # kg
         "target_duration_minutes": None,
         "notes": "Maintain consistent tempo.",
     },
@@ -293,9 +290,7 @@ workout_exercise_plans_data: list[dict[str, Any]] = [
         "workout_plan_id": 1,
         "exercise_id": 3,  # Assumed existing Exercise: Deadlift
         "order_in_plan": 3,
-        "target_reps": "5",
         "target_sets": 2,
-        "target_weights": 120,  # kg
         "target_duration_minutes": None,
         "notes": "Keep spine neutral.",
     },
@@ -305,17 +300,91 @@ workout_exercise_plans_data: list[dict[str, Any]] = [
         "workout_plan_id": 2,
         "exercise_id": 2,  # Assumed existing Exercise: Bench Press
         "order_in_plan": 1,
-        "target_reps": "10",
         "target_sets": 4,
-        "target_weights": 65,  # kg
         "target_duration_minutes": None,
         "notes": "Warm up rotator cuffs.",
     },
 ]
 
+# --- WorkoutExerciseSetPlan Data ---
+# Defines the target for each granular set within a WorkoutExercisePlan
+workout_exercise_set_plans_data = [
+    # Sets for WorkoutExercisePlan ID 1 (Squat in Full Body Strength)
+    {
+        "id": 1,
+        "workout_exercise_plan_id": 1,
+        "set_number": 1,
+        "target_reps": 5,
+        "target_weight": 95.0, # kg
+        "target_duration_seconds": None,
+        "created_at": now - timedelta(days=29, minutes=1), # Inherited from Base
+        "updated_at": now - timedelta(days=29, minutes=1), # Inherited from Base
+    },
+    {
+        "id": 2,
+        "workout_exercise_plan_id": 1,
+        "set_number": 2,
+        "target_reps": 5,
+        "target_weight": 100.0, # kg
+        "target_duration_seconds": None,
+        "created_at": now - timedelta(days=29, minutes=1),
+        "updated_at": now - timedelta(days=29, minutes=1),
+    },
+    {
+        "id": 3,
+        "workout_exercise_plan_id": 1,
+        "set_number": 3,
+        "target_reps": 5,
+        "target_weight": 102.5, # kg
+        "target_duration_seconds": None,
+        "created_at": now - timedelta(days=29, minutes=1),
+        "updated_at": now - timedelta(days=29, minutes=1),
+    },
+    {
+        "id": 4,
+        "workout_exercise_plan_id": 1,
+        "set_number": 4,
+        "target_reps": 5,
+        "target_weight": 105.0, # kg
+        "target_duration_seconds": None,
+        "created_at": now - timedelta(days=29, minutes=1),
+        "updated_at": now - timedelta(days=29, minutes=1),
+    },
+    # Sets for WorkoutExercisePlan ID 2 (Bench Press in Full Body Strength)
+    {
+        "id": 5,
+        "workout_exercise_plan_id": 2,
+        "set_number": 1,
+        "target_reps": 8,
+        "target_weight": 65.0, # kg
+        "target_duration_seconds": None,
+        "created_at": now - timedelta(days=29, minutes=1),
+        "updated_at": now - timedelta(days=29, minutes=1),
+    },
+    {
+        "id": 6,
+        "workout_exercise_plan_id": 2,
+        "set_number": 2,
+        "target_reps": 8,
+        "target_weight": 65.0, # kg
+        "target_duration_seconds": None,
+        "created_at": now - timedelta(days=29, minutes=1),
+        "updated_at": now - timedelta(days=29, minutes=1),
+    },
+    {
+        "id": 7,
+        "workout_exercise_plan_id": 2,
+        "set_number": 3,
+        "target_reps": 8,
+        "target_weight": 65.0, # kg
+        "target_duration_seconds": None,
+        "created_at": now - timedelta(days=29, minutes=1),
+        "updated_at": now - timedelta(days=29, minutes=1),
+    },
+]
+
 # --- WorkoutPlanSchedule Data ---
 # Schedules specific WorkoutPlans for future dates/times
-now = datetime.now()
 workout_plan_schedules_data = [
     {
         "id": 1,
@@ -392,24 +461,124 @@ workout_sessions_data: list[dict[str, Any]] = [
     },
 ]
 
-# --- WorkoutSessionResult Data ---
-# Represents summary results for an exercise within a completed WorkoutSession.
+# --- WorkoutSessionExerciseResult Data ---
+# Represents exercise results for an exercise within a completed WorkoutSession.
 # Only results linked to a WorkoutPlan have been kept.
-workout_session_results_data = [
+workout_session_exercise_results_data = [
     {
         "id": 1,
-        "workout_session_id": 1,  # Result for WorkoutSession 1
-        "workout_exercise_plan_id": 1,  # Linked to plan_squat (exercise_id:1, workout_plan_id:1)
-        "exercise_id": 1,  # The exercise this result is for (Squat)
-        "workout_plan_id": 1,  # The plan this exercise belongs to
-        "reps_achieved": 5,
-        "sets_achieved": 3,
-        "weights_achieved": 105.0,  # Achieved slightly more than target
-        "total_weight_lifted": 1575,  # 3 sets * 5 reps * 105 kg
-        "created_at": now - timedelta(days=10),  # Inherited from Base
-        "updated_at": now - timedelta(days=10),  # Inherited from Base
+        "workout_session_id": 1,  # Links to 'Full Body Strength - Past Session'
+        "exercise_id": 1,  # Links to 'Squat'
+        "workout_exercise_plan_id": 1,  # Links to the planned Squat exercise (Plan ID 1)
+        "sets_achieved": 4,  # Achieved 4 sets of squats
+        "duration_minutes_achieved": None,  # Not a timed exercise
+        "created_at": now - timedelta(days=10, hours=0, minutes=10), # Inherited from Base
+        "updated_at": now - timedelta(days=10, hours=0, minutes=5), # Inherited from Base
+    },
+    {
+        "id": 2,
+        "workout_session_id": 1,  # Links to 'Full Body Strength - Past Session'
+        "exercise_id": 2,  # Links to 'Bench Press'
+        "workout_exercise_plan_id": 2,  # Links to the planned Bench Press exercise (Plan ID 1)
+        "sets_achieved": 3,  # Achieved 3 sets of bench press
+        "duration_minutes_achieved": None,
+        "created_at": now - timedelta(days=10, hours=0, minutes=0),
+        "updated_at": now - timedelta(days=10, hours=0, minutes=0),
     },
 ]
+
+# --- WorkoutSessionExerciseSetResult Data ---
+# Captures the granular results for each set within a WorkoutSessionExerciseResult.
+workout_session_exercise_set_results_data = [
+    # Sets for WorkoutSessionExerciseResult ID 1 (Squat in Full Body Strength Session)
+    {
+        "id": 1,
+        "session_exercise_result_id": 1,
+        "workout_exercise_set_plan_id": 1, # Links to planned Set 1 of Squat (WorkoutExerciseSetPlan ID 1)
+        "set_number": 1,
+        "reps_achieved": 5,
+        "weight_achieved": 95.0, # kg
+        "duration_seconds": None,
+        "rpe": 6,
+        "created_at": now - timedelta(days=10, hours=0, minutes=9),
+        "updated_at": now - timedelta(days=10, hours=0, minutes=9),
+    },
+    {
+        "id": 2,
+        "session_exercise_result_id": 1,
+        "workout_exercise_set_plan_id": 2, # Links to planned Set 2 of Squat (WorkoutExerciseSetPlan ID 2)
+        "set_number": 2,
+        "reps_achieved": 5,
+        "weight_achieved": 100.0, # kg
+        "duration_seconds": None,
+        "rpe": 7,
+        "created_at": now - timedelta(days=10, hours=0, minutes=7),
+        "updated_at": now - timedelta(days=10, hours=0, minutes=7),
+    },
+    {
+        "id": 3,
+        "session_exercise_result_id": 1,
+        "workout_exercise_set_plan_id": 3, # Links to planned Set 3 of Squat (WorkoutExerciseSetPlan ID 3)
+        "set_number": 3,
+        "reps_achieved": 5,
+        "weight_achieved": 102.5, # kg
+        "duration_seconds": None,
+        "rpe": 8,
+        "created_at": now - timedelta(days=10, hours=0, minutes=5),
+        "updated_at": now - timedelta(days=10, hours=0, minutes=5),
+    },
+    {
+        "id": 4,
+        "session_exercise_result_id": 1,
+        "workout_exercise_set_plan_id": 4, # Links to planned Set 4 of Squat (WorkoutExerciseSetPlan ID 4)
+        "set_number": 4,
+        "reps_achieved": 4, # Failed 5th rep
+        "weight_achieved": 105.0, # kg
+        "duration_seconds": None,
+        "rpe": 9,
+        "created_at": now - timedelta(days=10, hours=0, minutes=3),
+        "updated_at": now - timedelta(days=10, hours=0, minutes=3),
+    },
+
+    # Sets for WorkoutSessionExerciseResult ID 2 (Bench Press in Full Body Strength Session)
+    {
+        "id": 5,
+        "session_exercise_result_id": 2,
+        "workout_exercise_set_plan_id": 5, # Links to planned Set 1 of Bench Press (WorkoutExerciseSetPlan ID 5)
+        "set_number": 1,
+        "reps_achieved": 8,
+        "weight_achieved": 65.0, # kg
+        "duration_seconds": None,
+        "rpe": 7,
+        "created_at": now - timedelta(days=10, hours=0, minutes=1),
+        "updated_at": now - timedelta(days=10, hours=0, minutes=1),
+    },
+    {
+        "id": 6,
+        "session_exercise_result_id": 2,
+        "workout_exercise_set_plan_id": 6, # Links to planned Set 2 of Bench Press (WorkoutExerciseSetPlan ID 6)
+        "set_number": 2,
+        "reps_achieved": 7,
+        "weight_achieved": 65.0, # kg
+        "duration_seconds": None,
+        "rpe": 8,
+        "created_at": now - timedelta(days=9, hours=23, minutes=59),
+        "updated_at": now - timedelta(days=9, hours=23, minutes=59),
+    },
+    {
+        "id": 7,
+        "session_exercise_result_id": 2,
+        "workout_exercise_set_plan_id": 7, # Links to planned Set 3 of Bench Press (WorkoutExerciseSetPlan ID 7)
+        "set_number": 3,
+        "reps_achieved": 6,
+        "weight_achieved": 65.0, # kg
+        "duration_seconds": None,
+        "rpe": 8,
+        "created_at": now - timedelta(days=9, hours=23, minutes=57),
+        "updated_at": now - timedelta(days=9, hours=23, minutes=57),
+    },
+]
+
 
 # helpers
 exercise_name_to_id = {ex["name"]: ex["id"] for ex in exercises_list}
