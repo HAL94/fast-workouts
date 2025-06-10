@@ -9,6 +9,7 @@ class PostgresSettings(BaseSettings):
     PG_DB: str
 
 
+
 class JwtSettings(BaseSettings):
     SECRET_KEY: str = "a5f1e06590c961d334e7a8e632712d984439fc43bad6ccdb977446579bd82e4a"
     ALGORITHM: str = "HS256"
@@ -17,6 +18,7 @@ class JwtSettings(BaseSettings):
 # the only use case that I know of where multiple inheritance is acceptable, 
 # in general you should not do such a thing for your business-related code.
 class AppSettings(PostgresSettings, JwtSettings):
+    ENV: str = "prod"
     model_config = SettingsConfigDict(
         env_file='.env', env_file_encoding='utf-8')
 

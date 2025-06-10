@@ -34,16 +34,28 @@ async def health_check(session: AsyncSession = Depends(get_async_session)):
         )
 
 
-@app.exception_handler(StarletteHTTPException)
-async def global_exception_handler(request: Request, exc: StarletteHTTPException):
-    """Global exception handler for all errors"""
-    logger.error(f"Method: {request.method}. Request Failed: URL: {request.url}.")
-
+def exception_handler(exc: Exception):
     if isinstance(exc, AppException):
         content = exc.dict()
     elif isinstance(exc, HTTPException):
         content = AppException(status_code=exc.status_code, message=exc.detail).dict()
     else:
-        content = AppException(status_code=500, message="Internal Server Error").dict()
+        message = str(exc) if settings.ENV == "dev" else "Internal Server Error"
+        content = AppException(status_code=500, message=message).dict()    
+    return JSONResponse(content=content, status_code=content.get("status_code", 500))
 
-    return JSONResponse(content=content, status_code=exc.status_code)
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler_by_generic_exception(
+    request: Request, exc: Exception
+):
+    """Global exception handler for all unexpected errors"""
+    logger.error(f"Method: {request.method}. Request Failed: URL: {request.url}.")
+    return exception_handler(exc)
+
+
+@app.exception_handler(StarletteHTTPException)
+async def global_exception_handler(request: Request, exc: StarletteHTTPException):
+    """Global exception handler for all http errors"""
+    return exception_handler(exc)

@@ -39,11 +39,11 @@ class JwtAuth:
             return user_found
 
         except ExpiredSignatureError as e:
-            logger.error("[BaseJwtAuth]: Token has expired")
-            raise e
+            logger.info("[BaseJwtAuth]: Token has expired")
+            raise UnauthorizedException from e
         except InvalidTokenError as e:
-            logger.error("[BaseJwtAuth]: Token is invalid")
-            raise e
+            logger.info("[BaseJwtAuth]: Token is invalid")
+            raise UnauthorizedException from e
 
 
 security = HTTPBearer()

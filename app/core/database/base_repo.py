@@ -6,6 +6,8 @@ from sqlalchemy.exc import IntegrityError, ProgrammingError
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.sql.elements import ColumnElement
 
+from app.core.common.app_response import AppBaseModel
+
 from .base_model import Base
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.attributes import InstrumentedAttribute
@@ -16,8 +18,8 @@ DbModel = TypeVar("T", bound=Base)  # type: ignore
 PydanticModel = TypeVar("M", bound=BaseModel)
 
 
-class PaginatedResponse(BaseModel, Generic[PydanticModel]):
-    data: list[PydanticModel]
+class PaginatedResponse(AppBaseModel, Generic[PydanticModel]):
+    result: list[PydanticModel]
     total_count: int
     page: int
     size: int
@@ -40,7 +42,7 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
 
     async def create(
         self, data: BaseModel, return_model: Optional[BaseModel | PydanticModel] = None
-    ):
+    ) -> PydanticModel:
         """
         Accepts a Pydantic model as data, creates a new record in the database, and returns the record as pydantic model.
 
@@ -53,7 +55,7 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
         session = self.session
         created_db_model = await session.scalar(
             insert(self._dbmodel)
-            .values(data.model_dump(exclude_none=True))
+            .values(data.model_dump(exclude_none=True, exclude_unset=True, by_alias=False))
             .returning(self._dbmodel)
         )
         await session.commit()
@@ -381,9 +383,10 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
         # print(f"total_count: {total_count}")
 
         return_model = return_model or self._model
-
-        return PaginatedResponse(
-            data=[return_model(**item.dict()) for item in result.all()],
+        
+        PaginatedResponse.__model__ = return_model
+        return PaginatedResponse[PydanticModel](
+            result=[return_model(**item.dict()) for item in result.all()],
             total_count=total_count,
             page=page,
             size=size,

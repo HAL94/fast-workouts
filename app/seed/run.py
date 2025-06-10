@@ -112,42 +112,42 @@ def main():
     register_dependency(UserSeed)
 
     # user-dependent models
-    register_dependency(WorkoutPlanSeed)
-    register_dependency(WorkoutPlanScheduleSeed)
-    register_dependency(WorkoutSessionSeed)
-    register_dependency(WorkoutExercisePlanSeed)
-    register_dependency(WorkoutExerciseSetPlanSeed)
-    register_dependency(WorkoutSessionExerciseResultsSeed)
-    register_dependency(WorkoutSessionExerciseResultSetSeed)
+    # register_dependency(WorkoutPlanSeed)
+    # register_dependency(WorkoutPlanScheduleSeed)
+    # register_dependency(WorkoutSessionSeed)
+    # register_dependency(WorkoutExercisePlanSeed)
+    # register_dependency(WorkoutExerciseSetPlanSeed)
+    # register_dependency(WorkoutSessionExerciseResultsSeed)
+    # register_dependency(WorkoutSessionExerciseResultSetSeed)
 
     user_seeder = resolve_dependency(UserSeed)
     exercise_muscle_group_seeder = resolve_dependency(ExerciseMuscleGroupSeed)
     exercise_category_seeder = resolve_dependency(ExerciseCategoryMapSeed)
 
-    workout_plan_seeder = resolve_dependency(WorkoutPlanSeed)
-    workout_plan_schedule_seeder = resolve_dependency(WorkoutPlanScheduleSeed)
-    workout_session_seeder = resolve_dependency(WorkoutSessionSeed)
-    workout_exercise_plan_seeder = resolve_dependency(WorkoutExercisePlanSeed)
-    workout_session_exercise_results_seeder = resolve_dependency(
-        WorkoutSessionExerciseResultsSeed
-    )
-    workout_session_exercise_result_set_seeder = resolve_dependency(
-        WorkoutSessionExerciseResultSetSeed
-    )
-    workout_exercise_set_plan_seeder = resolve_dependency(WorkoutExerciseSetPlanSeed)
+    # workout_plan_seeder = resolve_dependency(WorkoutPlanSeed)
+    # workout_plan_schedule_seeder = resolve_dependency(WorkoutPlanScheduleSeed)
+    # workout_session_seeder = resolve_dependency(WorkoutSessionSeed)
+    # workout_exercise_plan_seeder = resolve_dependency(WorkoutExercisePlanSeed)
+    # workout_session_exercise_results_seeder = resolve_dependency(
+    #     WorkoutSessionExerciseResultsSeed
+    # )
+    # workout_session_exercise_result_set_seeder = resolve_dependency(
+    #     WorkoutSessionExerciseResultSetSeed
+    # )
+    # workout_exercise_set_plan_seeder = resolve_dependency(WorkoutExerciseSetPlanSeed)
 
     user_seeder.create_many()
 
     exercise_category_seeder.create_many()
     exercise_muscle_group_seeder.create_many()
 
-    workout_plan_seeder.create_many()
-    workout_plan_schedule_seeder.create_many()
-    workout_session_seeder.create_many()
-    workout_exercise_plan_seeder.create_many()
-    workout_exercise_set_plan_seeder.create_many()
-    workout_session_exercise_results_seeder.create_many()
-    workout_session_exercise_result_set_seeder.create_many()
+    # workout_plan_seeder.create_many()
+    # workout_plan_schedule_seeder.create_many()
+    # workout_session_seeder.create_many()
+    # workout_exercise_plan_seeder.create_many()
+    # workout_exercise_set_plan_seeder.create_many()
+    # workout_session_exercise_results_seeder.create_many()
+    # workout_session_exercise_result_set_seeder.create_many()
 
     print("Done!")
 
