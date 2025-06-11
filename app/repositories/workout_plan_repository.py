@@ -1,4 +1,5 @@
 from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from app.api.v1.workouts.schema import (
     CreateWorkoutPlanRequest,
@@ -9,14 +10,25 @@ from app.models import (
     ExerciseMuscleGroup,
     MuscleGroup,
     WorkoutExercisePlan,
-    WorkoutExerciseSetPlan,
     WorkoutPlan,
 )
+from app.repositories.exercise_plan_repository import ExercisePlanRepository
+from app.repositories.exercise_set_plan_repository import ExerciseSetPlanRepository
 
 
 class WorkoutPlanRepository(BaseRepo[WorkoutPlan, WorkoutPlanBase]):
     __dbmodel__ = WorkoutPlan
     __model__ = WorkoutPlanBase
+
+    def __init__(
+        self,
+        session: AsyncSession,
+        exercise_plan_repo: ExercisePlanRepository,
+        exercise_set_plan_repo: ExerciseSetPlanRepository,
+    ):
+        super().__init__(session)
+        self.exercise_plan_repo = exercise_plan_repo
+        self.exercise_set_plan_repo = exercise_set_plan_repo
 
     async def get_muscles_for_workout(self, workout_id: int) -> list[str]:
         muscles_for_plan = await self.session.scalars(
@@ -35,55 +47,46 @@ class WorkoutPlanRepository(BaseRepo[WorkoutPlan, WorkoutPlanBase]):
 
         return muscles_for_plan.all()
 
+
     async def create_workout_plan(
         self, user_id: int, workout_data: CreateWorkoutPlanRequest
-    ) -> WorkoutExercisePlan:
+    ) -> WorkoutPlanBase:
         session = self.session
-
-        workout_data_created = WorkoutPlan(
+        workout_data_create = WorkoutPlanBase(
             title=workout_data.title,
             description=workout_data.description,
             user_id=user_id,
             comments=workout_data.comments,
         )
 
-        for exercise_plan in workout_data.workout_exercise_plans:
-            exercise_plan_data = WorkoutExercisePlan(
-                exercise_id=exercise_plan.exercise_id,
-                order_in_plan=exercise_plan.order_in_plan,
-                target_sets=exercise_plan.target_sets,
-                workout_plan_id=workout_data_created.id,
+        created_workout_data = await self.create(data=workout_data_create)
+
+        created_exercises = await self.exercise_plan_repo.create_many_exercise_plans(
+            workout_id=created_workout_data.id,
+            exercise_plans=workout_data.workout_exercise_plans,
+        )
+
+        for index, exercise_set_plan in enumerate(created_exercises):
+            data = workout_data.workout_exercise_plans[index]
+
+            await self.exercise_set_plan_repo.create_many_exercise_set_plans(
+                exercise_plan_id=exercise_set_plan.id,
+                exercise_set_plans=data.workout_exercise_set_plans,
             )
-            for exercise_set_plan in exercise_plan.workout_exercise_set_plans:
-                exercise_set_plan_data = WorkoutExerciseSetPlan(
-                    set_number=exercise_set_plan.set_number,
-                    target_reps=exercise_set_plan.target_reps,
-                    target_weight=exercise_set_plan.target_weight,
-                    target_duration_seconds=exercise_set_plan.target_duration_seconds,
-                )
-                exercise_plan_data.workout_exercise_set_plans.append(
-                    exercise_set_plan_data
-                )
-
-            workout_data_created.workout_exercise_plans.append(exercise_plan_data)
-
-        session.add(workout_data_created)
-        await session.commit()
-        await session.refresh(
-            workout_data_created
-        )  # Refresh the instance to get the generated ID
 
         workout_plan_cursor = await session.scalars(
             select(WorkoutPlan)
-            .where(WorkoutPlan.id == workout_data_created.id)
+            .where(WorkoutPlan.id == created_workout_data.id)
             .options(
-                selectinload(WorkoutPlan.workout_exercise_plans).selectinload(
+                selectinload(WorkoutPlan.workout_exercise_plans)
+                .selectinload(
                     WorkoutExercisePlan.workout_exercise_set_plans
                 )
             )
         )
 
         fully_loaded_workout_plan = workout_plan_cursor.unique().first()
+
         return WorkoutPlanBase.model_validate(
             fully_loaded_workout_plan, from_attributes=True
         )

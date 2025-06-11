@@ -1,3 +1,5 @@
-from app.repositories.workout_plan_repository import WorkoutPlanRepository
-__all__ = [WorkoutPlanRepository]
+from .workout_plan_repository import WorkoutPlanRepository
+from .exercise_plan_repository import ExercisePlanRepository
+from .exercise_set_plan_repository import ExerciseSetPlanRepository
 
+__all__ = [WorkoutPlanRepository, ExercisePlanRepository, ExerciseSetPlanRepository]

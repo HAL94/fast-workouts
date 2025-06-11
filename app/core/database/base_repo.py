@@ -41,7 +41,7 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
         return self.__dbmodel__
 
     async def create(
-        self, data: BaseModel, return_model: Optional[BaseModel | PydanticModel] = None
+        self, data: BaseModel, return_model: Optional[BaseModel | PydanticModel] = None, commit: bool = True
     ) -> PydanticModel:
         """
         Accepts a Pydantic model as data, creates a new record in the database, and returns the record as pydantic model.
@@ -58,7 +58,8 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
             .values(data.model_dump(exclude_none=True, exclude_unset=True, by_alias=False))
             .returning(self._dbmodel)
         )
-        await session.commit()
+        if commit:
+            await session.commit()
 
         if not return_model:
             return_model = self._model
@@ -70,6 +71,7 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
         data: list[BaseModel],
         return_model: Optional[BaseModel | PydanticModel] = None,
         batch_size: int = 1000,
+        commit: bool = True,
     ) -> list[PydanticModel]:
         """
         Create multiple records in the database.
@@ -105,7 +107,7 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
             # Process in batches to avoid memory issues with large datasets
             for i in range(0, len(data), batch_size):
                 batch = data[i : i + batch_size]
-                batch_values = [item.model_dump(exclude_none=True) for item in batch]
+                batch_values = [item.model_dump(exclude_none=True, by_alias=False) for item in batch]
 
                 # Use bulk insert with RETURNING to get created records
                 created_records = await session.scalars(
@@ -116,7 +118,8 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
                 batch_results = created_records.all()
                 all_created_records.extend(batch_results)
 
-            await session.commit()
+            if commit:
+                await session.commit()
 
             return [return_model(**record.dict()) for record in all_created_records]
 
@@ -167,7 +170,7 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
             index_elements = ["id"]
 
         session = self.session
-        data_dict = data.model_dump(exclude_none=True)
+        data_dict = data.model_dump(exclude_none=True, by_alias=False)
 
         # Validate that all index elements exist in the data
         data_keys = set(data_dict.keys())
@@ -257,7 +260,7 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
 
             session = self.session
 
-            data_values = [item.model_dump() for item in data]
+            data_values = [item.model_dump(exclude_none=True, by_alias=False) for item in data]
             data_model_fields = data[0].model_fields
 
             data_keys = set(data_model_fields.keys())
@@ -504,7 +507,7 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
 
         updated_db_model = await session.scalar(
             update(self._dbmodel)
-            .values(data.model_dump(exclude_none=True))
+            .values(data.model_dump(exclude_none=True, by_alias=False))
             .filter(*where_clause)
             .returning(self._dbmodel)
         )
@@ -545,7 +548,7 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
             )
 
         if any(
-            field not in item.model_dump(exclude_unset=True).keys() for item in data
+            field not in item.model_dump(exclude_unset=True, by_alias=False).keys() for item in data
         ):
             raise ValueError(
                 f"Your passed data sequence contains items that are missing the field: {field}"
@@ -553,7 +556,7 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
 
         session: AsyncSession = self.session
 
-        update_values = [item.model_dump(exclude_none=True) for item in data]
+        update_values = [item.model_dump(exclude_none=True, by_alias=False) for item in data]
 
         # unlike a single record update, a bulk update does not support RETURNING
         # it is best to update with `executemany` which receives a parameter sets

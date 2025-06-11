@@ -8,7 +8,7 @@ class WorkoutPlanBase(AppBaseModel):
     description: Optional[str] = None
     comments: Optional[str] = None
     user_id: Optional[int] = None
-    workout_exercise_plans: Optional[list["ExercisePlanBase"]] = []
+    workout_exercise_plans: Optional[list["ExercisePlanBase"]] = None
     
 
 class ExercisePlanBase(AppBaseModel):
@@ -21,7 +21,7 @@ class ExercisePlanBase(AppBaseModel):
     workout_plan_id: Optional[int] = None
     created_at: Optional[str | datetime] = None
     updated_at: Optional[str | datetime] = None
-    workout_exercise_set_plans: Optional[list["ExerciseSetPlanBase"]] = []
+    workout_exercise_set_plans: Optional[list["ExerciseSetPlanBase"]] = None
 
 class ExerciseSetPlanBase(AppBaseModel):
     id: Optional[int] = None
@@ -52,5 +52,5 @@ class CreateWorkoutPlanRequest(AppBaseModel):
     comments: Optional[str] = None
     user_id: Optional[int] = None
     
-    workout_exercise_plans: Optional[list[ExercisePlanCreate]] = []
+    workout_exercise_plans: Optional[list[ExercisePlanCreate]] = None
 
