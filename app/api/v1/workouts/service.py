@@ -1,6 +1,7 @@
 from app.repositories import WorkoutPlanRepository
 from app.api.v1.workouts.schema import (
     CreateWorkoutPlanRequest,
+    UpdateWorkoutPlanRequest,
     WorkoutPlanBase,
     WorkoutPlanRead,
 )
@@ -43,6 +44,15 @@ class WorkoutPlanService:
         workout_pagination.result = workout_plans
 
         return workout_pagination
+
+    async def update_workout_plan(
+        self, user_data: UserRead, data: UpdateWorkoutPlanRequest
+    ) -> WorkoutPlanBase:
+        return await self.workout_repo.update_workout_plan(
+            user_id=user_data.id,
+            workout_plan_id=data.id,
+            update_data=data,
+        )
 
     async def create_workout_plan(
         self, user_data: UserRead, data: CreateWorkoutPlanRequest

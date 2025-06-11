@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from app.api.v1.workouts.schema import (
     CreateWorkoutPlanRequest,
+    UpdateWorkoutPlanRequest,
     WorkoutPlanBase,
 )
 from app.core.database.base_repo import BaseRepo
@@ -30,6 +31,22 @@ class WorkoutPlanRepository(BaseRepo[WorkoutPlan, WorkoutPlanBase]):
         self.exercise_plan_repo = exercise_plan_repo
         self.exercise_set_plan_repo = exercise_set_plan_repo
 
+    async def get_workout_by_id(self, workout_id: int) -> WorkoutPlanBase:
+        session = self.session
+        workout_plan_cursor = await session.scalars(
+            select(WorkoutPlan)
+            .where(WorkoutPlan.id == workout_id)
+            .options(
+                selectinload(WorkoutPlan.workout_exercise_plans).selectinload(
+                    WorkoutExercisePlan.workout_exercise_set_plans
+                )
+            )
+        )
+
+        fully_loaded_workout_plan = workout_plan_cursor.unique().first()
+
+        return fully_loaded_workout_plan
+
     async def get_muscles_for_workout(self, workout_id: int) -> list[str]:
         muscles_for_plan = await self.session.scalars(
             select(MuscleGroup.muscle_target)
@@ -47,11 +64,44 @@ class WorkoutPlanRepository(BaseRepo[WorkoutPlan, WorkoutPlanBase]):
 
         return muscles_for_plan.all()
 
+    async def update_workout_plan(
+        self, user_id: int, workout_plan_id: int, update_data: UpdateWorkoutPlanRequest
+    ) -> WorkoutPlanBase:
+        workout_data = await self.get_one(
+            val=workout_plan_id, where_clause=[WorkoutPlan.user_id == user_id]
+        )
+        workout_plan = WorkoutPlanBase(
+            title=update_data.title or workout_data.title,
+            description=update_data.description or workout_data.description,
+            user_id=user_id,
+            comments=update_data.comments or workout_data.comments,
+        )
+        await self.update_one(
+            data=workout_plan,
+            where_clause=[
+                WorkoutPlan.id == workout_plan_id,
+                WorkoutPlan.user_id == user_id,
+            ],
+        )
+
+        await self.exercise_plan_repo.update_many(update_data.workout_exercise_plans)
+
+        for exercise_plan in update_data.workout_exercise_plans:
+            await self.exercise_set_plan_repo.update_many(
+                data=exercise_plan.workout_exercise_set_plans,
+            )
+
+        fully_loaded_workout_plan = await self.get_workout_by_id(
+            workout_id=workout_plan_id
+        )
+
+        return WorkoutPlanBase.model_validate(
+            fully_loaded_workout_plan, from_attributes=True
+        )
 
     async def create_workout_plan(
         self, user_id: int, workout_data: CreateWorkoutPlanRequest
     ) -> WorkoutPlanBase:
-        session = self.session
         workout_data_create = WorkoutPlanBase(
             title=workout_data.title,
             description=workout_data.description,
@@ -74,18 +124,9 @@ class WorkoutPlanRepository(BaseRepo[WorkoutPlan, WorkoutPlanBase]):
                 exercise_set_plans=data.workout_exercise_set_plans,
             )
 
-        workout_plan_cursor = await session.scalars(
-            select(WorkoutPlan)
-            .where(WorkoutPlan.id == created_workout_data.id)
-            .options(
-                selectinload(WorkoutPlan.workout_exercise_plans)
-                .selectinload(
-                    WorkoutExercisePlan.workout_exercise_set_plans
-                )
-            )
+        fully_loaded_workout_plan = await self.get_workout_by_id(
+            workout_id=created_workout_data.id
         )
-
-        fully_loaded_workout_plan = workout_plan_cursor.unique().first()
 
         return WorkoutPlanBase.model_validate(
             fully_loaded_workout_plan, from_attributes=True

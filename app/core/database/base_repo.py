@@ -319,7 +319,7 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
         field: InstrumentedAttribute | str | None = None,
         where_clause: list[ColumnElement[bool]] = None,
         return_model: Optional[BaseModel | PydanticModel] = None,
-    ):
+    ) -> PydanticModel:
         """
         Retrieves a single record from the database matching the given criteria.
 
@@ -488,7 +488,8 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
         data: BaseModel,
         where_clause: list[ColumnElement[bool]] = None,
         return_model: Optional[BaseModel | PydanticModel] = None,
-    ):
+        commit: bool = True,
+    ) -> PydanticModel:
         """
         Updates a single record in the database matching the given criteria.
 
@@ -512,7 +513,8 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
             .returning(self._dbmodel)
         )
 
-        await session.commit()
+        if commit:
+            await session.commit()
 
         if updated_db_model is None:
             raise NotFoundException
@@ -527,7 +529,7 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
         data: list[BaseModel],
         field: Any = "id",
         return_model: Optional[BaseModel | PydanticModel] = None,
-    ) -> list[BaseModel | PydanticModel]:
+    ) -> list[PydanticModel]:
         """
         We expect that data is a list of dictionaries, where each dictionary element will have a field acting (ideally) as primary key, or at least it should be unique. This field should be passed to the `field` argument in this function.
 

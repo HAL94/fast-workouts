@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from app.api.v1.workouts.schema import CreateWorkoutPlanRequest
+from app.api.v1.workouts.schema import CreateWorkoutPlanRequest, UpdateWorkoutPlanRequest
 from app.api.v1.workouts.service import WorkoutPlanService
 from app.core.auth.jwt import validate_jwt
 from app.core.auth.schema import UserRead
@@ -28,5 +28,16 @@ async def create_workout_plan(
 ):
     data = await workout_plan_service.create_workout_plan(
         user_data=user_data, data=payload
+    )
+    return AppResponse(data=data)
+
+@router.patch("/update-workout-plan")
+async def update_workout_plan(
+    payload: UpdateWorkoutPlanRequest,
+    user_data: UserRead = Depends(validate_jwt),
+    workout_plan_service: WorkoutPlanService = Depends(get_workout_plan_service),
+):
+    data = await workout_plan_service.update_workout_plan(
+        data=payload, user_data=user_data
     )
     return AppResponse(data=data)
