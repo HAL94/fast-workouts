@@ -41,3 +41,14 @@ async def update_workout_plan(
         data=payload, user_data=user_data
     )
     return AppResponse(data=data)
+
+@router.delete("/delete-workout-plan/{workout_plan_id}")
+async def delete_workout_plan(
+    workout_plan_id: int,
+    user_data: UserRead = Depends(validate_jwt),
+    workout_plan_service: WorkoutPlanService = Depends(get_workout_plan_service),
+):
+    data = await workout_plan_service.delete_workout_plan(
+        workout_plan_id=workout_plan_id, user_data=user_data
+    )
+    return AppResponse(data=data)

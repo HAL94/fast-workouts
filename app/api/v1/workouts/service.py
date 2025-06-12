@@ -63,3 +63,13 @@ class WorkoutPlanService:
         )
 
         return result
+
+    async def delete_workout_plan(
+        self, user_data: UserRead, workout_plan_id: int
+    ) -> WorkoutPlanBase:
+        result = await self.workout_repo.delete_workout_plan(
+            user_id=user_data.id,
+            workout_plan_id=workout_plan_id,
+        )
+
+        return result

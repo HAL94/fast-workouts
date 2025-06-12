@@ -4,7 +4,6 @@ from sqlalchemy import ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database.base_model import Base
 
-
 class WorkoutSessionStatus(str, enum.Enum):
     """
     Status of a workout session (e.g., 'scheduled', 'in_progress', 'completed', 'cancelled').
@@ -327,3 +326,30 @@ class WorkoutSessionExerciseSetResult(Base):
     workout_exercise_set_plan: Mapped["WorkoutExerciseSetPlan"] = relationship(
         back_populates="workout_session_exercise_set_results"
     )
+
+
+
+
+
+
+# This function will be called before SQLAlchemy flushes changes to the database
+# @event.listens_for(Session, "do_orm_execute")
+# def validate_workout_exercise_set_plans_sequence(orm_execute_state: ORMExecuteState):
+#     """
+#     Validates that the set_number in workout_exercise_set_plans for a WorkoutExercisePlan
+#     are sequential and start from 1 before flushing to the database.
+#     Also validates that the number of individual set plans matches target_sets.
+#     """
+#     if orm_execute_state.is_update:
+#         try:
+#             # print("updating exercise plan", orm_execute_state.parameters)
+#             if orm_execute_state.parameters and isinstance(orm_execute_state.parameters, list):
+#                 exercise_plan = ExercisePlanBase.model_validate(orm_execute_state.parameters[0])
+#                 print("got an exercise_plan", exercise_plan)
+#         except ValidationError:
+#             print("Not an exercise plan")
+            
+        
+        
+        
+    

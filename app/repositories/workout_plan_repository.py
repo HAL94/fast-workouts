@@ -113,7 +113,7 @@ class WorkoutPlanRepository(BaseRepo[WorkoutPlan, WorkoutPlanBase]):
 
         created_exercises = await self.exercise_plan_repo.create_many_exercise_plans(
             workout_id=created_workout_data.id,
-            exercise_plans=workout_data.workout_exercise_plans,
+            payload=workout_data.workout_exercise_plans,
         )
 
         for index, exercise_set_plan in enumerate(created_exercises):
@@ -121,7 +121,7 @@ class WorkoutPlanRepository(BaseRepo[WorkoutPlan, WorkoutPlanBase]):
 
             await self.exercise_set_plan_repo.create_many_exercise_set_plans(
                 exercise_plan_id=exercise_set_plan.id,
-                exercise_set_plans=data.workout_exercise_set_plans,
+                payload=data.workout_exercise_set_plans,
             )
 
         fully_loaded_workout_plan = await self.get_workout_by_id(
@@ -140,3 +140,12 @@ class WorkoutPlanRepository(BaseRepo[WorkoutPlan, WorkoutPlanBase]):
         )
 
         return await self.session.scalar(exercises_count_stmt)
+
+    async def delete_workout_plan(self, workout_plan_id: int, user_id: int):
+        return await self.delete_one(
+            val=workout_plan_id,
+            where_clause=[
+                WorkoutPlan.id == workout_plan_id,
+                WorkoutPlan.user_id == user_id,
+            ]
+        )
