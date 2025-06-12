@@ -38,7 +38,9 @@ class ExercisePlanService:
         return result
 
     async def create_exercise_plan(self, user_id: int, data: WorkoutExercisePlan):
-        result = await self.exercise_plan_repo.create_one(data=data)
+        result = await self.exercise_plan_repo.create(
+            data=WorkoutExercisePlan(**data.model_dump(), user_id=user_id)
+        )
         return result
 
     async def delete_exercise_plan(self, exercise_plan_id: int):

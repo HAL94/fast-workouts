@@ -1,9 +1,10 @@
+from app.core.database.base_repo import PaginatedResponse
 from app.repositories import WorkoutPlanRepository
 from app.api.v1.workouts.schema import (
     CreateWorkoutPlanRequest,
     UpdateWorkoutPlanRequest,
     WorkoutPlanBase,
-    WorkoutPlanRead,
+    WorkoutPlanReadPaginatedItem,
 )
 from app.core.auth.schema import UserRead
 from app.models import WorkoutPlan
@@ -13,7 +14,7 @@ class WorkoutPlanService:
     def __init__(self, workout_repo: WorkoutPlanRepository):
         self.workout_repo = workout_repo
 
-    async def get_workouts(self, user_data: UserRead) -> list[WorkoutPlanRead]:
+    async def get_workouts(self, user_data: UserRead) -> PaginatedResponse[WorkoutPlanReadPaginatedItem]:
         # endpoint should also be paginated
         workout_pagination = await self.workout_repo.get_many(
             page=1,
@@ -21,7 +22,7 @@ class WorkoutPlanService:
             where_clause=[WorkoutPlan.user_id == user_data.id],
         )
 
-        workout_plans: list[WorkoutPlanRead] = []
+        workout_plans: list[WorkoutPlanReadPaginatedItem] = []
 
         for item in workout_pagination.result:
             exercise_count = await self.workout_repo.get_exercise_count_for_workout(
@@ -30,12 +31,8 @@ class WorkoutPlanService:
             target_workout_plan_muscles = (
                 await self.workout_repo.get_muscles_for_workout(item.id)
             )
-            item_result = WorkoutPlanRead(
-                id=item.id,
-                title=item.title,
-                user_id=item.user_id,
-                comments=item.comments,
-                description=item.description,
+            item_result = WorkoutPlanReadPaginatedItem(
+                **item.model_dump(exclude_none=True, by_alias=False),
                 exercises_count=exercise_count,
                 muscle_groups=target_workout_plan_muscles,
             )

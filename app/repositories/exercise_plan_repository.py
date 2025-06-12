@@ -28,12 +28,12 @@ class ExercisePlanRepository(BaseRepo[WorkoutExercisePlan, ExercisePlanBase]):
         return ExercisePlanBase(**exercise_plan.dict())
 
     async def create_exercise_plan(
-        self, workout_id: int, exercise_plan: ExercisePlanCreate, commit: bool = True
+        self, workout_id: int, payload: ExercisePlanCreate, commit: bool = True
     ):
         data = WorkoutExercisePlan(
-            exercise_id=exercise_plan.exercise_id,
-            order_in_plan=exercise_plan.order_in_plan,
-            target_sets=exercise_plan.target_sets,
+            **payload.model_dump(
+                exclude_unset=True, by_alias=False, exclude={"workout_plan_id": True}
+            ),
             workout_plan_id=workout_id,
         )
 

@@ -2,13 +2,15 @@ from typing import ClassVar, Optional
 from app.api.v1.schema import WorkoutPlanBase, ExercisePlanBase, ExerciseSetPlanBase
 from app.core.common.app_response import AppBaseModel
 
-
-class WorkoutPlanRead(WorkoutPlanBase):
-    # exlcusdes the workout_exercise_plans from the base class
+# --- Read Workout Schema ---
+# Represents reading workout plans, exercise plans and exercise sets plans
+class WorkoutPlanReadPaginatedItem(WorkoutPlanBase):
+    # excludes the workout_exercise_plans from the base class
     workout_exercise_plans: ClassVar[list["ExerciseSetPlanBase"]]
 
     exercises_count: int
     muscle_groups: list[str] = []
+
 
 
 # --- Create Workout Schema ---
@@ -33,15 +35,12 @@ class CreateWorkoutPlanRequest(AppBaseModel):
 
 # --- Update Workout Schema ---
 # Represents updation of workout plan, exercise plans and exercise sets plans
-
-
 class ExerciseSetPlanUpdate(AppBaseModel):
     id: int
     set_number: Optional[int] = None
     target_reps: Optional[int] = None
     target_weight: Optional[float] = None
     target_duration_minutes: Optional[float] = None
-
 
 class ExercisePlanUpdate(AppBaseModel):
     id: int
@@ -51,7 +50,6 @@ class ExercisePlanUpdate(AppBaseModel):
     workout_exercise_set_plans: Optional[list["ExerciseSetPlanUpdate"]] = []
     target_duration_minutes: Optional[float] = None
     notes: Optional[str] = None
-
 
 class UpdateWorkoutPlanRequest(AppBaseModel):
     id: int
