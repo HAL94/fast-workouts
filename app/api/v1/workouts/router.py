@@ -9,6 +9,7 @@ from app.core.auth.jwt import validate_jwt
 from app.core.auth.schema import UserRead
 from app.core.common.app_response import AppResponse
 from app.dependencies.services import get_workout_plan_service
+from .exercise_plans.router import router as exercise_plans_router
 
 
 router: APIRouter = APIRouter(prefix="/workouts")
@@ -23,7 +24,23 @@ async def get_workouts(
     return AppResponse(data=data)
 
 
-@router.post("/create-workout-plan")
+@router.get("/{workout_plan_id}")
+async def get_workout_plan(
+    workout_plan_id: int,
+    user_data: UserRead = Depends(validate_jwt),
+    workout_plan_service: WorkoutPlanService = Depends(get_workout_plan_service),
+):
+    data = await workout_plan_service.get_workout_plan(
+        workout_plan_id=workout_plan_id, user_data=user_data
+    )
+    return AppResponse(
+        data=data,
+        message="Workout plan retrieved successfully",
+        success=True,
+    )
+
+
+@router.post("/")
 async def create_workout_plan(
     payload: CreateWorkoutPlanRequest,
     workout_plan_service: WorkoutPlanService = Depends(get_workout_plan_service),
@@ -35,7 +52,7 @@ async def create_workout_plan(
     return AppResponse(data=data)
 
 
-@router.patch("/update-workout-plan")
+@router.patch("/")
 async def update_workout_plan(
     payload: UpdateWorkoutPlanRequest,
     user_data: UserRead = Depends(validate_jwt),
@@ -47,7 +64,7 @@ async def update_workout_plan(
     return AppResponse(data=data)
 
 
-@router.delete("/delete-workout-plan/{workout_plan_id}")
+@router.delete("/{workout_plan_id}")
 async def delete_workout_plan(
     workout_plan_id: int,
     user_data: UserRead = Depends(validate_jwt),
@@ -57,3 +74,6 @@ async def delete_workout_plan(
         workout_plan_id=workout_plan_id, user_data=user_data
     )
     return AppResponse(data=data)
+
+
+router.include_router(exercise_plans_router)

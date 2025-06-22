@@ -1,7 +1,6 @@
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from sqlalchemy.orm.strategy_options import _AbstractLoad
 from app.api.v1.workouts.schema import (
     CreateWorkoutPlanRequest,
     UpdateWorkoutPlanRequest,
@@ -31,26 +30,6 @@ class WorkoutPlanRepository(BaseRepo[WorkoutPlan, WorkoutPlanBase]):
         super().__init__(session)
         self.exercise_plan_repo = exercise_plan_repo
         self.exercise_set_plan_repo = exercise_set_plan_repo
-
-    async def get_workout_by_id(
-        self, workout_id: int, relations: list[_AbstractLoad] = None
-    ) -> WorkoutPlanBase:
-        session = self.session
-
-        stmt = select(WorkoutPlan).where(WorkoutPlan.id == workout_id)
-
-        if relations:
-            options = relations
-            stmt = stmt.options(*options)
-
-        workout_plan_cursor = await session.scalars(stmt)
-
-        fully_loaded_workout_plan = workout_plan_cursor.unique().first()
-        
-        if relations:
-            return WorkoutPlanBase.model_validate(fully_loaded_workout_plan, from_attributes=True)
-        else:
-            return WorkoutPlanBase(**fully_loaded_workout_plan.dict())
 
     async def get_muscles_for_workout(self, workout_id: int) -> list[str]:
         muscles_for_plan = await self.session.scalars(
@@ -96,8 +75,9 @@ class WorkoutPlanRepository(BaseRepo[WorkoutPlan, WorkoutPlanBase]):
                 data=exercise_plan.workout_exercise_set_plans,
             )
 
-        fully_loaded_workout_plan = await self.get_workout_by_id(
-            workout_id=workout_plan_id,
+        fully_loaded_workout_plan = await self.get_one(
+            val=workout_plan_id,
+            where_clause=[WorkoutPlan.id == workout_plan_id],
             relations=[
                 selectinload(WorkoutPlan.workout_exercise_plans).selectinload(
                     WorkoutExercisePlan.workout_exercise_set_plans
@@ -132,8 +112,9 @@ class WorkoutPlanRepository(BaseRepo[WorkoutPlan, WorkoutPlanBase]):
                 payload=data.workout_exercise_set_plans,
             )
 
-        fully_loaded_workout_plan = await self.get_workout_by_id(
-            workout_id=created_workout_data.id,
+        fully_loaded_workout_plan = await self.get_one(
+            val=created_workout_data.id,
+            where_clause=[WorkoutPlan.id == created_workout_data.id],
             relations=[
                 selectinload(WorkoutPlan.workout_exercise_plans).selectinload(
                     WorkoutExercisePlan.workout_exercise_set_plans
@@ -159,4 +140,23 @@ class WorkoutPlanRepository(BaseRepo[WorkoutPlan, WorkoutPlanBase]):
                 WorkoutPlan.id == workout_plan_id,
                 WorkoutPlan.user_id == user_id,
             ],
+        )
+
+    async def delete_workout_exercise_plan(
+        self, workout_plan_id: int, user_id: int, exercise_plan_id: int
+    ):
+        return await self.exercise_plan_repo.delete_exercise_plan(
+            user_id=user_id,
+            workout_plan_id=workout_plan_id,
+            exercise_plan_id=exercise_plan_id,
+        )
+    
+    async def delete_workout_exercise_set_plan(
+        self, workout_plan_id: int, user_id: int, exercise_plan_id: int, exercise_set_plan_id: int
+    ):
+        return await self.exercise_set_plan_repo.delete_exercise_set_plan(
+            user_id=user_id,
+            workout_plan_id=workout_plan_id,
+            exercise_plan_id=exercise_plan_id,
+            exercise_set_plan_id=exercise_set_plan_id,
         )

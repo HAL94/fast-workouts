@@ -1,5 +1,6 @@
 from typing import Any, ClassVar, Generic, Optional, TypeVar
 
+from sqlalchemy.orm.strategy_options import _AbstractLoad
 from pydantic import BaseModel
 from sqlalchemy import func, delete, insert, select, update
 from sqlalchemy.exc import IntegrityError, ProgrammingError
@@ -318,6 +319,7 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
         val: Any,
         field: InstrumentedAttribute | str | None = None,
         where_clause: list[ColumnElement[bool]] = None,
+        relations: list[_AbstractLoad] = None,
         return_model: Optional[BaseModel | PydanticModel] = None,
     ) -> PydanticModel:
         """
@@ -347,15 +349,26 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
 
         if where_clause:
             where_cond.extend(where_clause)
+        
+        stmt = select(self._dbmodel).where(*where_cond)
+        
+        if relations:
+            options = relations
+            stmt = stmt.options(*options)
 
-        result = await session.scalar(select(self._dbmodel).where(*where_cond))
+        result = await session.scalar(stmt)
 
         if result is None:
             raise NotFoundException
-
+        
         return_model = return_model or self._model
+        
+        if relations:
+            return return_model.model_validate(result, from_attributes=True)
+        else:
+            return return_model(**result.dict())
 
-        return return_model(**result.dict())
+        # return return_model(**result.dict())
 
     async def get_many(
         self,
