@@ -12,7 +12,7 @@ from app.api.v1.workouts.exercise_set_plans.router import router as exercise_set
 
 
 router: APIRouter = APIRouter(
-    prefix="/{workout_plan_id}/exercise-plans", dependencies=[Depends(validate_jwt)]
+    prefix="/{workout_plan_id}/exercises", dependencies=[Depends(validate_jwt)]
 )
 
 
@@ -22,7 +22,7 @@ async def get_exercise_plans(
     user_data: UserRead = Depends(validate_jwt),
     workout_plan_service: WorkoutPlanService = Depends(get_workout_plan_service),
 ):
-    workout_exercise_plans = await workout_plan_service.get_workout_exercise_plans(
+    workout_exercise_plans = await workout_plan_service.get_many_exercise_plans(
         workout_plan_id=workout_plan_id, user_id=user_data.id
     )
 
@@ -36,7 +36,7 @@ async def get_exercise_plan(
     user_data: UserRead = Depends(validate_jwt),
     workout_plan_service: WorkoutPlanService = Depends(get_workout_plan_service),
 ):
-    workout_exercise_plan = await workout_plan_service.get_workout_exercise_plan(
+    workout_exercise_plan = await workout_plan_service.get_exercise_plan(
         workout_plan_id=workout_plan_id,
         exercise_plan_id=exercise_plan_id,
         user_id=user_data.id,
@@ -53,7 +53,7 @@ async def create_exercise_plan(
     workout_plan_service: WorkoutPlanService = Depends(get_workout_plan_service),
 ):
     workout_exercise_plan: ExercisePlanBase = await (
-        workout_plan_service.create_workout_exercise_plan(
+        workout_plan_service.add_exercise_plan_to_workout(
             workout_plan_id=workout_plan_id,
             user_id=user_data.id,
             payload=payload,
@@ -72,7 +72,7 @@ async def update_exercise_plan(
     workout_plan_service: WorkoutPlanService = Depends(get_workout_plan_service),
 ):
     workout_exercise_plan: ExercisePlanBase = await (
-        workout_plan_service.update_workout_exercise_plan(
+        workout_plan_service.update_exercise_plan(
             workout_plan_id=workout_plan_id,
             exercise_plan_id=exercise_plan_id,
             user_id=user_data.id,

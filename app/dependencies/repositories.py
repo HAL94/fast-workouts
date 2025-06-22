@@ -3,12 +3,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 from app.repositories import (
+    Repos,
     WorkoutPlanRepository,
     ExercisePlanRepository,
     ExerciseSetPlanRepository,
 )
 from app.dependencies.database import get_async_session
 
+def get_all_repos(session: AsyncSession = Depends(get_async_session)):
+    return Repos(session=session)
+    
 
 def get_exercise_plan_repo(session: AsyncSession = Depends(get_async_session)):
     return ExercisePlanRepository(session)

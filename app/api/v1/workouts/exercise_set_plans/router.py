@@ -13,7 +13,7 @@ from .background_tasks import (
 )
 
 router: APIRouter = APIRouter(
-    prefix="/{exercise_plan_id}/exercise-set-plans",
+    prefix="/{exercise_plan_id}/sets",
     dependencies=[Depends(validate_jwt)],
 )
 
@@ -25,7 +25,7 @@ async def get_exercise_set_plan(
     user_data: UserRead = Depends(validate_jwt),
     workout_plan_service: WorkoutPlanService = Depends(get_workout_plan_service),
 ):
-    result = await workout_plan_service.get_exercise_set_plan(
+    result = await workout_plan_service.get_set_plan(
         workout_plan_id=workout_plan_id,
         exercise_plan_id=exercise_plan_id,
         exercise_set_plan_id=exercise_set_plan_id,
@@ -41,7 +41,7 @@ async def get_exercise_set_plans(
     user_data: UserRead = Depends(validate_jwt),
     workout_plan_service: WorkoutPlanService = Depends(get_workout_plan_service),
 ):
-    result = await workout_plan_service.get_exercise_set_plans(
+    result = await workout_plan_service.get_many_set_plans(
         workout_plan_id=workout_plan_id,
         exercise_plan_id=exercise_plan_id,
         user_id=user_data.id,
@@ -58,7 +58,7 @@ async def create_exercise_set_plan(
     user_data: UserRead = Depends(validate_jwt),
     workout_plan_service: WorkoutPlanService = Depends(get_workout_plan_service),
 ):
-    result = await workout_plan_service.create_exercise_set_plan(
+    result = await workout_plan_service.add_set_to_exercise_plan(
         exercise_plan_id=exercise_plan_id,
         workout_plan_id=workout_plan_id,
         user_id=user_data.id,
@@ -77,7 +77,7 @@ async def update_exercise_set_plan(
     user_data: UserRead = Depends(validate_jwt),
     workout_plan_service: WorkoutPlanService = Depends(get_workout_plan_service),
 ):
-    result = await workout_plan_service.update_exercise_set_plan(
+    result = await workout_plan_service.update_set_plan(
         exercise_set_plan_id=exercise_set_plan_id,
         exercise_plan_id=exercise_plan_id,
         workout_plan_id=workout_plan_id,
@@ -104,7 +104,7 @@ async def delete_exercise_set_plan(
         exercise_plan_id=exercise_plan_id,
     )
 
-    result = await workout_plan_service.delete_exercise_set_plan(
+    result = await workout_plan_service.delete_set_plan(
         exercise_set_plan_id=exercise_set_plan_id,
         exercise_plan_id=exercise_plan_id,
         workout_plan_id=workout_plan_id,

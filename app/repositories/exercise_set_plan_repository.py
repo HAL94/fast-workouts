@@ -39,7 +39,7 @@ class ExerciseSetPlanRepository(BaseRepo[WorkoutExerciseSetPlan, ExerciseSetPlan
 
         return exercise_set_plan
 
-    async def create_exercise_plan(
+    async def create_set_plan(
         self,
         exercise_plan_id: int,
         payload: ExerciseSetPlanBase,

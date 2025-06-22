@@ -20,7 +20,7 @@ async def get_workouts(
     workout_plan_service: WorkoutPlanService = Depends(get_workout_plan_service),
     user_data: UserRead = Depends(validate_jwt),
 ):
-    data = await workout_plan_service.get_workouts(user_data=user_data)
+    data = await workout_plan_service.get_many_workouts(user_data=user_data)
     return AppResponse(data=data)
 
 
@@ -46,8 +46,8 @@ async def create_workout_plan(
     workout_plan_service: WorkoutPlanService = Depends(get_workout_plan_service),
     user_data: UserRead = Depends(validate_jwt),
 ):
-    data = await workout_plan_service.create_workout_plan(
-        user_data=user_data, data=payload
+    data = await workout_plan_service.add_workout_plan(
+        user_data=user_data, create_data=payload
     )
     return AppResponse(data=data)
 
