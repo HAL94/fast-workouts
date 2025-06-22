@@ -251,10 +251,6 @@ class WorkoutExercisePlan(Base):
         back_populates="workout_exercise_plan"
     )
 
-    __table_args__ = (
-        UniqueConstraint("exercise_id", "workout_plan_id", name="unique_exercise_plan"),
-    )
-
 class WorkoutExerciseSetPlan(Base):
     """
     Describes an exercise set plan for a specific exercise plan. It also acts as a parent of `workout_session_exercise_set_results` list.

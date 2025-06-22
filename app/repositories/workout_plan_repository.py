@@ -1,6 +1,7 @@
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from app.api.v1.schema.workout_plan import ExercisePlanBase, ExerciseSetPlanBase
 from app.api.v1.workouts.schema import (
     CreateWorkoutPlanRequest,
     UpdateWorkoutPlanRequest,
@@ -11,6 +12,7 @@ from app.models import (
     ExerciseMuscleGroup,
     MuscleGroup,
     WorkoutExercisePlan,
+    WorkoutExerciseSetPlan,
     WorkoutPlan,
 )
 from app.repositories.exercise_plan_repository import ExercisePlanRepository
@@ -124,6 +126,129 @@ class WorkoutPlanRepository(BaseRepo[WorkoutPlan, WorkoutPlanBase]):
 
         return fully_loaded_workout_plan
 
+    async def get_workout_exercise_plans(self, user_id: int, workout_plan_id: int):
+        await self.get_one(
+            val=workout_plan_id, where_clause=[WorkoutPlan.user_id == user_id]
+        )
+        return await self.exercise_plan_repo.get_many(
+            page=1,
+            size=10,
+            where_clause=[WorkoutExercisePlan.workout_plan_id == workout_plan_id],
+        )
+
+    async def get_one_workout_exercise_plan(
+        self, user_id: int, workout_plan_id: int, exercise_plan_id: int
+    ):
+        await self.get_one(
+            val=workout_plan_id, where_clause=[WorkoutPlan.user_id == user_id]
+        )
+        return await self.exercise_plan_repo.get_one(
+            val=exercise_plan_id,
+            where_clause=[WorkoutExercisePlan.workout_plan_id == workout_plan_id],
+        )
+
+    async def get_one_exercise_set_plan(
+        self,
+        workout_plan_id: int,
+        user_id: int,
+        exercise_plan_id: int,
+        exercise_set_plan_id: int,
+    ):
+        await self.get_one(
+            val=workout_plan_id, where_clause=[WorkoutPlan.user_id == user_id]
+        )
+        return await self.exercise_set_plan_repo.get_one(
+            val=exercise_set_plan_id,
+            where_clause=[
+                WorkoutExerciseSetPlan.workout_exercise_plan_id == exercise_plan_id
+            ],
+        )
+
+    async def get_workout_exercise_set_plans(
+        self, user_id: int, workout_plan_id: int, exercise_plan_id: int
+    ):
+        await self.get_one(
+            val=workout_plan_id, where_clause=[WorkoutPlan.user_id == user_id]
+        )
+        await self.exercise_plan_repo.get_one(
+            val=exercise_plan_id,
+            where_clause=[WorkoutExercisePlan.workout_plan_id == workout_plan_id],
+        )
+        return await self.exercise_set_plan_repo.get_many(
+            page=1,
+            size=10,
+            where_clause=[
+                WorkoutExerciseSetPlan.workout_exercise_plan_id == exercise_plan_id
+            ],
+        )
+
+    async def create_workout_exercise_plan(
+        self, workout_plan_id: int, user_id: int, payload: ExercisePlanBase
+    ) -> ExercisePlanBase:
+        await self.get_one(
+            val=workout_plan_id, where_clause=[WorkoutPlan.user_id == user_id]
+        )
+        payload.workout_plan_id = workout_plan_id
+        exercise_plan = await self.exercise_plan_repo.create(payload=payload)
+        return exercise_plan
+
+    async def create_exercise_set_plan(
+        self,
+        exercise_plan_id: int,
+        workout_plan_id: int,
+        user_id: int,
+        payload: ExerciseSetPlanBase,
+    ):
+        await self.get_one(
+            val=workout_plan_id, where_clause=[WorkoutPlan.user_id == user_id]
+        )
+        await self.exercise_plan_repo.get_one(
+            val=exercise_plan_id,
+            where_clause=[WorkoutExercisePlan.workout_plan_id == workout_plan_id],
+        )
+        payload.workout_exercise_plan_id = exercise_plan_id
+        return await self.exercise_set_plan_repo.create(data=payload)
+
+    async def update_exercise_set_plan(
+        self,
+        exercise_set_plan_id: int,
+        exercise_plan_id: int,
+        workout_plan_id: int,
+        user_id: int,
+        payload: ExerciseSetPlanBase,
+    ):
+        await self.exercise_set_plan_repo.find_one_exercise_set_plan(
+            user_id=user_id,
+            workout_plan_id=workout_plan_id,
+            exercise_plan_id=exercise_plan_id,
+            exercise_set_plan_id=exercise_set_plan_id,
+        )
+        return await self.exercise_set_plan_repo.update_one(
+            data=payload,
+            where_clause=[WorkoutExerciseSetPlan.id == exercise_set_plan_id],
+        )
+
+    async def update_workout_exercise_plan(
+        self,
+        workout_plan_id: int,
+        exercise_plan_id: int,
+        user_id: int,
+        payload: ExercisePlanBase,
+    ) -> ExercisePlanBase:
+        await self.exercise_plan_repo.find_one_exercise_plan(
+            user_id=user_id,
+            workout_plan_id=workout_plan_id,
+            exercise_plan_id=exercise_plan_id,
+        )
+        exercise_plan = await self.exercise_plan_repo.update_one(
+            payload,
+            where_clause=[
+                WorkoutExercisePlan.id == exercise_plan_id,
+                WorkoutExercisePlan.workout_plan_id == workout_plan_id,
+            ],
+        )
+        return exercise_plan
+
     async def get_exercise_count_for_workout(self, workout_id: int) -> int:
         exercises_count_stmt = select(func.count()).select_from(
             select(WorkoutExercisePlan)
@@ -150,9 +275,13 @@ class WorkoutPlanRepository(BaseRepo[WorkoutPlan, WorkoutPlanBase]):
             workout_plan_id=workout_plan_id,
             exercise_plan_id=exercise_plan_id,
         )
-    
+
     async def delete_workout_exercise_set_plan(
-        self, workout_plan_id: int, user_id: int, exercise_plan_id: int, exercise_set_plan_id: int
+        self,
+        workout_plan_id: int,
+        user_id: int,
+        exercise_plan_id: int,
+        exercise_set_plan_id: int,
     ):
         return await self.exercise_set_plan_repo.delete_exercise_set_plan(
             user_id=user_id,

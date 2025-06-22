@@ -1,4 +1,5 @@
 from sqlalchemy.orm import selectinload
+from app.api.v1.schema.workout_plan import ExercisePlanBase, ExerciseSetPlanBase
 from app.core.database.base_repo import PaginatedResponse
 from app.repositories import WorkoutPlanRepository
 from app.api.v1.workouts.schema import (
@@ -9,6 +10,7 @@ from app.api.v1.workouts.schema import (
 )
 from app.core.auth.schema import UserRead
 from app.models import WorkoutExercisePlan, WorkoutPlan
+
 
 class WorkoutPlanService:
     def __init__(self, workout_repo: WorkoutPlanRepository):
@@ -47,7 +49,7 @@ class WorkoutPlanService:
     async def get_workout_plan(
         self, user_data: UserRead, workout_plan_id: int
     ) -> WorkoutPlanBase:
-        workout_plan = await self.workout_repo.get_one(
+        return await self.workout_repo.get_one(
             val=workout_plan_id,
             where_clause=[WorkoutPlan.user_id == user_data.id],
             relations=[
@@ -56,10 +58,6 @@ class WorkoutPlanService:
                 )
             ],
         )
-
-        # await self.workout_repo.get_workout_by_id(workout_id=workout_plan_id,)
-
-        return workout_plan
 
     async def update_workout_plan(
         self, user_data: UserRead, data: UpdateWorkoutPlanRequest
@@ -80,15 +78,93 @@ class WorkoutPlanService:
 
         return result
 
+    async def get_workout_exercise_plans(self, workout_plan_id: int, user_id: int):
+        return await self.workout_repo.get_workout_exercise_plans(
+            workout_plan_id=workout_plan_id, user_id=user_id
+        )
+
+    async def get_workout_exercise_plan(
+        self, workout_plan_id: int, user_id: int, exercise_plan_id: int
+    ):
+        return await self.workout_repo.get_one_workout_exercise_plan(
+            workout_plan_id=workout_plan_id,
+            user_id=user_id,
+            exercise_plan_id=exercise_plan_id,
+        )
+
+    async def get_exercise_set_plans(self, workout_plan_id: int, user_id: int, exercise_plan_id: int):
+        return await self.workout_repo.get_workout_exercise_set_plans(
+            workout_plan_id=workout_plan_id,
+            user_id=user_id,
+            exercise_plan_id=exercise_plan_id,
+        )
+    
+    async def get_exercise_set_plan(self, workout_plan_id: int, user_id: int, exercise_plan_id: int, exercise_set_plan_id: int):
+        return await self.workout_repo.get_one_exercise_set_plan(
+            workout_plan_id=workout_plan_id,
+            user_id=user_id,
+            exercise_plan_id=exercise_plan_id,
+            exercise_set_plan_id=exercise_set_plan_id,
+        )
+        
+    async def create_workout_exercise_plan(
+        self, workout_plan_id: int, user_id: int, payload: ExercisePlanBase
+    ):
+        return await self.workout_repo.create_workout_exercise_plan(
+            workout_plan_id=workout_plan_id, user_id=user_id, payload=payload
+        )
+
+    async def create_exercise_set_plan(
+        self,
+        exercise_plan_id: int,
+        workout_plan_id: int,
+        user_id: int,
+        payload: ExerciseSetPlanBase,
+    ):
+        return await self.workout_repo.create_exercise_set_plan(
+            exercise_plan_id=exercise_plan_id,
+            workout_plan_id=workout_plan_id,
+            user_id=user_id,
+            payload=payload,
+        )
+    
+    async def update_exercise_set_plan(
+        self,
+        exercise_set_plan_id: int,
+        exercise_plan_id: int,
+        workout_plan_id: int,
+        user_id: int,
+        payload: ExerciseSetPlanBase,
+    ):
+        return await self.workout_repo.update_exercise_set_plan(
+            exercise_set_plan_id=exercise_set_plan_id,
+            exercise_plan_id=exercise_plan_id,
+            workout_plan_id=workout_plan_id,
+            user_id=user_id,
+            payload=payload,
+        )
+
+    async def update_workout_exercise_plan(
+        self,
+        workout_plan_id: int,
+        exercise_plan_id: int,
+        user_id: int,
+        payload: ExercisePlanBase,
+    ):
+        return await self.workout_repo.update_workout_exercise_plan(
+            workout_plan_id=workout_plan_id,
+            exercise_plan_id=exercise_plan_id,
+            user_id=user_id,
+            payload=payload,
+        )
+
     async def delete_workout_plan(
         self, user_data: UserRead, workout_plan_id: int
     ) -> WorkoutPlanBase:
-        result = await self.workout_repo.delete_workout_plan(
+        return await self.workout_repo.delete_workout_plan(
             user_id=user_data.id,
             workout_plan_id=workout_plan_id,
         )
-
-        return result
 
     async def delete_exercise_plan(
         self, workout_plan_id: int, user_id: int, exercise_plan_id: int

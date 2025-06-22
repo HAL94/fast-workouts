@@ -1,8 +1,8 @@
-"""workout_sessions_exercise_sets_results
+"""workout_exercises_sets_results
 
-Revision ID: ea1b7972ba1b
+Revision ID: 9ebbf6e66081
 Revises: 07185670e2c8
-Create Date: 2025-06-09 15:23:56.537443
+Create Date: 2025-06-22 13:48:59.448410
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'ea1b7972ba1b'
+revision: str = '9ebbf6e66081'
 down_revision: Union[str, None] = '07185670e2c8'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -44,8 +44,7 @@ def upgrade() -> None:
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
     sa.ForeignKeyConstraint(['exercise_id'], ['exercises.id'], ),
     sa.ForeignKeyConstraint(['workout_plan_id'], ['workout_plans.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('exercise_id', 'workout_plan_id', name='unique_exercise_plan')
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('workout_plan_schedules',
     sa.Column('start_at', sa.DateTime(), nullable=False),

@@ -9,7 +9,7 @@ class ExerciseSetPlanRepository(BaseRepo[WorkoutExerciseSetPlan, ExerciseSetPlan
     __dbmodel__ = WorkoutExerciseSetPlan
     __model__ = ExerciseSetPlanBase
 
-    async def find_one_exercise_set_plan_by_user_id(
+    async def find_one_exercise_set_plan(
         self,
         user_id: int,
         workout_plan_id: int,
@@ -38,7 +38,6 @@ class ExerciseSetPlanRepository(BaseRepo[WorkoutExerciseSetPlan, ExerciseSetPlan
             raise NotFoundException
 
         return exercise_set_plan
-        # return ExerciseSetPlanBase(**exercise_set_plan.dict())
 
     async def create_exercise_plan(
         self,
@@ -83,7 +82,7 @@ class ExerciseSetPlanRepository(BaseRepo[WorkoutExerciseSetPlan, ExerciseSetPlan
         exercise_plan_id: int,
         exercise_set_plan_id: int,
     ):
-        result = await self.find_one_exercise_set_plan_by_user_id(
+        result = await self.find_one_exercise_set_plan(
             user_id=user_id,
             workout_plan_id=workout_plan_id,
             exercise_plan_id=exercise_plan_id,

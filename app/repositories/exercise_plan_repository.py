@@ -2,6 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from app.api.v1.workouts.schema import ExercisePlanBase, ExercisePlanCreate
 from app.core.database.base_repo import BaseRepo
+from app.core.exceptions import NotFoundException
 from app.models import WorkoutExercisePlan, WorkoutPlan
 
 
@@ -9,7 +10,7 @@ class ExercisePlanRepository(BaseRepo[WorkoutExercisePlan, ExercisePlanBase]):
     __dbmodel__ = WorkoutExercisePlan
     __model__ = ExercisePlanBase
 
-    async def find_one_exercise_plan_by_user_id(
+    async def find_one_exercise_plan(
         self,
         user_id: int,
         workout_plan_id: int,
@@ -30,26 +31,12 @@ class ExercisePlanRepository(BaseRepo[WorkoutExercisePlan, ExercisePlanBase]):
         )
 
         if not exercise_plan:
-            return None
+            raise NotFoundException
 
         if return_as_base:
             return exercise_plan
 
         return ExercisePlanBase(**exercise_plan.dict())
-
-    async def create_exercise_plan(
-        self, workout_id: int, payload: ExercisePlanCreate, commit: bool = True
-    ):
-        data = WorkoutExercisePlan(
-            **payload.model_dump(
-                exclude_unset=True, by_alias=False, exclude={"workout_plan_id": True}
-            ),
-            workout_plan_id=workout_id,
-        )
-
-        created_exercise_plan = await self.create(data=data, commit=commit)
-
-        return created_exercise_plan
 
     async def create_many_exercise_plans(
         self,
@@ -77,7 +64,7 @@ class ExercisePlanRepository(BaseRepo[WorkoutExercisePlan, ExercisePlanBase]):
     async def delete_exercise_plan(
         self, user_id: int, workout_plan_id: int, exercise_plan_id: int
     ) -> ExercisePlanBase:
-        result: WorkoutExercisePlan = await self.find_one_exercise_plan_by_user_id(
+        result: WorkoutExercisePlan = await self.find_one_exercise_plan(
             user_id=user_id,
             workout_plan_id=workout_plan_id,
             exercise_plan_id=exercise_plan_id,
