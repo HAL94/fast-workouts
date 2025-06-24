@@ -3,8 +3,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .workout_plan_repository import WorkoutPlanRepository
 from .exercise_plan_repository import ExercisePlanRepository
 from .exercise_set_plan_repository import ExerciseSetPlanRepository
+from .workout_schedule_repository import WorkoutScheduleRepository
 
-all_repos = [WorkoutPlanRepository, ExercisePlanRepository, ExerciseSetPlanRepository]
+all_repos = [
+    WorkoutPlanRepository,
+    ExercisePlanRepository,
+    ExerciseSetPlanRepository,
+    WorkoutScheduleRepository,
+]
 __all__ = all_repos
 
 
@@ -23,3 +29,7 @@ class Repos:
     @cached_property
     def exercise_set_plan(self) -> ExerciseSetPlanRepository:
         return ExerciseSetPlanRepository(session=self.session)
+
+    @cached_property
+    def workout_schedule(self) -> WorkoutScheduleRepository:
+        return WorkoutScheduleRepository(session=self.session)

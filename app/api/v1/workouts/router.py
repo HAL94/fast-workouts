@@ -11,9 +11,11 @@ from app.core.auth.schema import UserRead
 from app.core.common.app_response import AppResponse
 from app.dependencies.services import get_workout_plan_service
 from .exercise_plans.router import router as exercise_plans_router
+from .schedules.router import router as workout_schedules_router
 
 
 router: APIRouter = APIRouter(prefix="/workouts")
+
 
 
 @router.get("/")
@@ -79,3 +81,4 @@ async def delete_workout_plan(
 
 
 router.include_router(exercise_plans_router)
+router.include_router(workout_schedules_router)

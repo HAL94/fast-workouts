@@ -1,6 +1,6 @@
 from datetime import datetime
 import enum
-from sqlalchemy import ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import DateTime, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database.base_model import Base
 
@@ -178,7 +178,7 @@ class WorkoutPlan(Base):
 class WorkoutPlanSchedule(Base):
     __tablename__ = "workout_plan_schedules"
 
-    start_at: Mapped[datetime] = mapped_column(nullable=False, index=True)
+    start_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
     end_time: Mapped[datetime] = mapped_column(nullable=True, index=True)
     remind_before_minutes: Mapped[int] = mapped_column(nullable=True)
 

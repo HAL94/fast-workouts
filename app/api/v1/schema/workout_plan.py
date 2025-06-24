@@ -12,7 +12,7 @@ class WorkoutPlanBase(AppBaseModel):
     comments: Optional[str] = None
     user_id: Optional[int] = None
     workout_exercise_plans: Optional[list["ExercisePlanBase"]] = None
-    
+
 
 class ExercisePlanBase(AppBaseModel):
     id: Optional[int] = None
@@ -26,6 +26,7 @@ class ExercisePlanBase(AppBaseModel):
     updated_at: Optional[str | datetime] = None
     workout_exercise_set_plans: Optional[list["ExerciseSetPlanBase"]] = None
 
+
 class ExerciseSetPlanBase(AppBaseModel):
     id: Optional[int] = None
     set_number: int = Field(min=1, description="Order in the exercise plan")
@@ -35,3 +36,12 @@ class ExerciseSetPlanBase(AppBaseModel):
     workout_exercise_plan_id: Optional[int] = None
     created_at: Optional[str | datetime] = None
     updated_at: Optional[str | datetime] = None
+
+
+class ScheduleBase(AppBaseModel):
+    id: Optional[int] = None
+    workout_plan_id: int
+    user_id: int
+    start_at: datetime
+    end_time: Optional[datetime] = None
+    remind_before_minutes: Optional[int] = None
