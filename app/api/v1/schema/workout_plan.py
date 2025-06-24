@@ -1,5 +1,7 @@
 from datetime import datetime
 from typing import Optional
+
+from pydantic import Field
 from app.core.common.app_response import AppBaseModel
 
 
@@ -15,7 +17,7 @@ class WorkoutPlanBase(AppBaseModel):
 class ExercisePlanBase(AppBaseModel):
     id: Optional[int] = None
     exercise_id: int
-    order_in_plan: int
+    order_in_plan: int = Field(min=1, description="Order in the workout plan")
     target_sets: int
     target_duration_minutes: Optional[float] = None
     notes: Optional[str] = None
@@ -26,7 +28,7 @@ class ExercisePlanBase(AppBaseModel):
 
 class ExerciseSetPlanBase(AppBaseModel):
     id: Optional[int] = None
-    set_number: int
+    set_number: int = Field(min=1, description="Order in the exercise plan")
     target_reps: int
     target_weight: float
     target_duration_seconds: Optional[int] = None

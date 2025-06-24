@@ -1,7 +1,8 @@
-from fastapi import APIRouter, BackgroundTasks, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.schema.workout_plan import ExerciseSetPlanBase
+from app.api.v1.workouts.schema import ExerciseSetPlanReadPagination
 from app.api.v1.workouts.service import WorkoutPlanService
 from app.core.auth.jwt import validate_jwt
 from app.core.auth.schema import UserRead
@@ -39,12 +40,14 @@ async def get_exercise_set_plans(
     workout_plan_id: int,
     exercise_plan_id: int,
     user_data: UserRead = Depends(validate_jwt),
+    pagionation: ExerciseSetPlanReadPagination = Query(...),
     workout_plan_service: WorkoutPlanService = Depends(get_workout_plan_service),
 ):
     result = await workout_plan_service.get_many_set_plans(
         workout_plan_id=workout_plan_id,
         exercise_plan_id=exercise_plan_id,
         user_id=user_data.id,
+        pagionation=pagionation
     )
 
     return AppResponse(data=result)

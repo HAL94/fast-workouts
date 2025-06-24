@@ -9,12 +9,12 @@ from app.core.auth.schema import (
     UserReadWithPw,
     UserSigninRequest,
     UserSigninResponse,
+    UserSignupData,
     UserSignupRequest,
     UserSignupResponse,
 )
 from app.core.config import AppSettings, get_settings
 from app.core.exceptions import (
-    AlreadyExistException,
     ForbiddenException,
 )
 from passlib.context import CryptContext
@@ -24,11 +24,13 @@ logger = logging.getLogger("uvicorn")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+
 def get_auth_service(
     user_repo: UserRepository = Depends(get_user_repo),
     settings: AppSettings = Depends(get_settings),
 ):
     return AuthService(user_repo=user_repo, settings=settings)
+
 
 class AuthService:
     def __init__(self, user_repo: UserRepository, settings: AppSettings):
@@ -56,28 +58,30 @@ class AuthService:
         return encoded_jwt
 
     async def sign_up_user(self, payload: UserSignupRequest):
-        user_data: UserRead = await self.user_repo.get_one(
-            val=payload.email, field="email"
-        )
+        try:
+            await self.user_repo.get_one(val=payload.email, field="email")
+            return None
+        except Exception:
+            encrypted_pw = self._create_password_hash(payload.password)
 
-        if user_data:
-            raise AlreadyExistException
+            signup_data = UserSignupData(
+                email=payload.email,
+                full_name=payload.full_name,
+                hashed_password=encrypted_pw,
+            )
 
-        encrypted_pw = self._create_password_hash(payload.password)
+            created_user: UserSignupResponse = await self.user_repo.create(
+                data=signup_data
+            )
+            print("SignupResult", created_user)
 
-        signup_data = UserSignupRequest(
-            email=payload.email, name=payload.name, password=encrypted_pw
-        )
-
-        created_user: UserSignupResponse = await self.user_repo.create(data=signup_data)
-
-        return created_user
+            return created_user
 
     async def login_user(self, payload: UserSigninRequest):
         user_data: UserReadWithPw = await self.user_repo.get_one(
             val=payload.email, field="email", return_model=UserReadWithPw
         )
-        
+
         logger.debug(f"User Data: {user_data}")
 
         if not user_data:
@@ -98,7 +102,9 @@ class AuthService:
 
         login_data = UserSigninResponse(
             token=token,
-            user=UserRead(id=user_data.id, full_name=user_data.full_name, email=user_data.email),
+            user=UserRead(
+                id=user_data.id, full_name=user_data.full_name, email=user_data.email
+            ),
         )
 
         return login_data

@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from app.api.v1.schema.workout_plan import ExercisePlanBase
+from app.api.v1.workouts.schema import ExercisePlanReadPagination
 from app.api.v1.workouts.service import WorkoutPlanService
 
 
@@ -20,10 +21,11 @@ router: APIRouter = APIRouter(
 async def get_exercise_plans(
     workout_plan_id: int,
     user_data: UserRead = Depends(validate_jwt),
+    pagionation: ExercisePlanReadPagination = Query(...),
     workout_plan_service: WorkoutPlanService = Depends(get_workout_plan_service),
 ):
     workout_exercise_plans = await workout_plan_service.get_many_exercise_plans(
-        workout_plan_id=workout_plan_id, user_id=user_data.id
+        workout_plan_id=workout_plan_id, user_id=user_data.id, pagionation=pagionation
     )
 
     return AppResponse(data=workout_exercise_plans)

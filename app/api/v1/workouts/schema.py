@@ -1,6 +1,33 @@
 from typing import ClassVar, Optional
+
 from app.api.v1.schema import WorkoutPlanBase, ExercisePlanBase, ExerciseSetPlanBase
 from app.core.common.app_response import AppBaseModel
+from app.core.common.pagination_factory import PaginationFactory
+from app.models import WorkoutExercisePlan, WorkoutExerciseSetPlan, WorkoutPlan
+
+# --- Paginated Read Schema ---
+# Represents pagination schema for workout plans, exercise plans and exercise sets plans
+workout_plan_cols = WorkoutPlan.columns()
+WorkoutPlanPagination = PaginationFactory.create_pagination(
+    sortable_fields=workout_plan_cols, filterable_fields=workout_plan_cols
+)
+class WorkoutPlanReadPagination(WorkoutPlanPagination):
+    pass
+
+
+exercise_plan_cols = WorkoutExercisePlan.columns()
+WorkoutExercisePlanPagination = PaginationFactory.create_pagination(
+    sortable_fields=exercise_plan_cols, filterable_fields=exercise_plan_cols
+)
+class ExercisePlanReadPagination(WorkoutExercisePlanPagination):
+    pass
+
+exercise_set_plan_cols = WorkoutExerciseSetPlan.columns()
+ExerciseSetPlanPagination = PaginationFactory.create_pagination(
+    sortable_fields=exercise_set_plan_cols, filterable_fields=exercise_set_plan_cols
+)
+class ExerciseSetPlanReadPagination(ExerciseSetPlanPagination):
+    pass
 
 # --- Read Workout Schema ---
 # Represents reading workout plans, exercise plans and exercise sets plans
@@ -10,7 +37,6 @@ class WorkoutPlanReadPaginatedItem(WorkoutPlanBase):
 
     exercises_count: int
     muscle_groups: list[str] = []
-
 
 
 # --- Create Workout Schema ---
@@ -42,6 +68,7 @@ class ExerciseSetPlanUpdate(AppBaseModel):
     target_weight: Optional[float] = None
     target_duration_minutes: Optional[float] = None
 
+
 class ExercisePlanUpdate(AppBaseModel):
     id: int
     exercise_id: Optional[int]
@@ -50,6 +77,7 @@ class ExercisePlanUpdate(AppBaseModel):
     workout_exercise_set_plans: Optional[list["ExerciseSetPlanUpdate"]] = []
     target_duration_minutes: Optional[float] = None
     notes: Optional[str] = None
+
 
 class UpdateWorkoutPlanRequest(AppBaseModel):
     id: int

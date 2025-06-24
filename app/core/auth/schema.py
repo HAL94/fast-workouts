@@ -11,6 +11,10 @@ class UserRead(AppBaseModel):
     full_name: Optional[str] = None
     email: str
 
+class UserSignupData(BaseModel):
+    email: str
+    full_name: Optional[str] = None
+    hashed_password: str
 
 class UserReadWithPw(BaseModel):
     id: str | int
@@ -24,7 +28,7 @@ class UserData(AppBaseModel):
     token: AccessToken
 
 
-class UserSignupRequest(BaseModel):
+class UserSignupRequest(AppBaseModel):
     email: str
     full_name: Optional[str] = None
     password: str

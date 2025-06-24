@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Response
 
 from app.api.v1.auth.service import AuthService, get_auth_service
 from app.core.auth.jwt import validate_jwt
-from app.core.auth.schema import UserRead, UserSigninRequest
+from app.core.auth.schema import UserRead, UserSigninRequest, UserSignupRequest
 from app.core.common.app_response import AppResponse
 from app.core.exceptions import UnauthorizedException
 
@@ -32,3 +32,10 @@ async def get_user(user_data: UserRead = Depends(validate_jwt)):
         return AppResponse(data=user_data)
     except Exception as e:
         raise UnauthorizedException("Unauthorized") from e
+
+@router.post("/signup")
+async def signup(payload: UserSignupRequest, auth_service: AuthService = Depends(get_auth_service)):
+    data = await auth_service.sign_up_user(payload)
+    if data is None:
+        raise UnauthorizedException("Credentials invalid")
+    return AppResponse(data=data, message="User created successfully", success=True)
