@@ -4,11 +4,11 @@ from app.api.v1.workouts.schema import (
     CreateWorkoutScheduleRequest,
     WorkoutPlanScheduleReadPagination,
 )
-from app.api.v1.workouts.service import WorkoutPlanService
+from app.api.v1.workouts.services import WorkoutScheduleService
 from app.core.auth.jwt import validate_jwt
 from app.core.auth.schema import UserRead
 from app.core.common.app_response import AppResponse
-from app.dependencies.services import get_workout_plan_service
+from app.dependencies.services import get_schedule_service
 
 
 router: APIRouter = APIRouter(
@@ -21,9 +21,9 @@ async def get_workout_plan_schedules(
     workout_plan_id: int,
     user_data: UserRead = Depends(validate_jwt),
     pagination: WorkoutPlanScheduleReadPagination = Query(...),
-    workout_plan_service: WorkoutPlanService = Depends(get_workout_plan_service),
+    workout_schedule_service: WorkoutScheduleService = Depends(get_schedule_service),
 ):
-    result = await workout_plan_service.get_many_workout_schedules(
+    result = await workout_schedule_service.get_many_workout_schedules(
         user_id=user_data.id, pagination=pagination, workout_plan_id=workout_plan_id
     )
     return AppResponse(data=result)
@@ -34,9 +34,9 @@ async def get_workout_plan_schedule(
     workout_plan_id: int,
     workout_plan_schedule_id: int,
     user_data: UserRead = Depends(validate_jwt),
-    workout_plan_service: WorkoutPlanService = Depends(get_workout_plan_service),
+    workout_schedule_service: WorkoutScheduleService = Depends(get_schedule_service),
 ):
-    result = await workout_plan_service.get_workout_schedule(
+    result = await workout_schedule_service.get_workout_schedule(
         user_id=user_data.id,
         workout_plan_id=workout_plan_id,
         workout_plan_schedule_id=workout_plan_schedule_id,
@@ -49,7 +49,7 @@ async def create_workout_plan_schedule(
     workout_plan_id: int,
     payload: CreateWorkoutScheduleRequest,
     user_data: UserRead = Depends(validate_jwt),
-    workout_plan_service: WorkoutPlanService = Depends(get_workout_plan_service),
+    workout_plan_service: WorkoutScheduleService = Depends(get_schedule_service),
 ):
     result = await workout_plan_service.create_workout_schedule(
         user_id=user_data.id,

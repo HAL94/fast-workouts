@@ -5,7 +5,7 @@ from app.api.v1.workouts.schema import (
     UpdateWorkoutPlanRequest,
     WorkoutPlanReadPagination,
 )
-from app.api.v1.workouts.service import WorkoutPlanService
+from app.api.v1.workouts.services import WorkoutPlanService
 from app.core.auth.jwt import validate_jwt
 from app.core.auth.schema import UserRead
 from app.core.common.app_response import AppResponse
