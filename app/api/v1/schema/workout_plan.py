@@ -44,4 +44,4 @@ class ScheduleBase(AppBaseModel):
     user_id: int
     start_at: datetime
     end_time: Optional[datetime] = None
-    remind_before_minutes: Optional[int] = None
+    remind_before_minutes: Optional[float] = None
