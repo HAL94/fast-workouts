@@ -18,7 +18,7 @@ class TimeValidation:
 
     REMINDER_LIMITS = {
         # 15 minutes
-        'MIN_SCHEDULE_START_TIME': (DEFAULT_BUFFER_TIME * 2) + DEFAULT_BUFFER_TIME,
+        'MIN_SCHEDULE_START_TIME': DEFAULT_BUFFER_TIME * 3, # 15 minutes
         # 30 days
         'ABSOLUTE_MAX_MINUTES': 43200,
         # 7 days
@@ -52,14 +52,12 @@ class TimeValidation:
 
         if start_at.tzinfo is None:
             start_at = pytz.UTC.localize(start_at)
-        else:
-            start_at = start_at.astimezone(pytz.UTC)
 
         max_future = now + timedelta(days=30)
 
         is_too_early = start_at <= now + \
             timedelta(
-                minutes=TimeValidation.REMINDER_LIMITS["MIN_SCHEDULE_START_TIME"])
+                minutes=TimeValidation.DEFAULT_BUFFER_TIME * 2)
 
         return {
             "max_reached": start_at > max_future,
