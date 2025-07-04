@@ -11,14 +11,16 @@ class TimeValidation:
         A default buffer:
             - buffer_after_current_date_time: reminders should be higher than current date/time by this value (5 minutes)
             - buffer_before_workout_date_time: reminders should be less than start_at date/time by this value (5 minutes)
-            - Therefore, scheduling should start 15 (buffer_after_current_date_time + buffer_before_workout_date_time + 5)
+            - Therefore, scheduling should start 15 (DEFAULT_BUFFER_TIME * 3)
+
+            - Maybe we should consider a sperate buffer between start and reminder, and between schedule time and reminder
 
     """
     DEFAULT_BUFFER_TIME = 5  # 5 minutes
 
     REMINDER_LIMITS = {
         # 15 minutes
-        'MIN_SCHEDULE_START_TIME': DEFAULT_BUFFER_TIME * 3, # 15 minutes
+        'MIN_SCHEDULE_START_TIME': DEFAULT_BUFFER_TIME * 3,  # 15 minutes
         # 30 days
         'ABSOLUTE_MAX_MINUTES': 43200,
         # 7 days
@@ -247,4 +249,17 @@ class TimeReminderSuggestion:
 
         # Filter suggestions to only include valid ones
         max_valid = int(hours_until * 60) - 1
-        return [s for s in suggestions if s <= max_valid]
+        initial_data = [s for s in suggestions if s <= max_valid]
+
+        def mapper(item: int):
+            if item >= 1440:
+                unit = "day"
+            elif item >= 60:
+                unit = "hour"
+            else:
+                unit = "minutes"
+            return { "unit": unit, "value": item }
+
+        generated = list(map(mapper, initial_data))
+
+        return {"suggestions": generated}

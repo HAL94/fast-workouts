@@ -17,6 +17,7 @@ class AppException(HTTPException):
     ):
         self.status_code = status_code
         self.message = message
+        self.internal_code = internal_code
         super().__init__(status_code=status_code, detail=message)
 
     def dict(self) -> dict:

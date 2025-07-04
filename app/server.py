@@ -64,8 +64,7 @@ async def global_exception_handler_by_generic_exception(
 
 @app.exception_handler(StarletteHTTPException)
 async def global_exception_handler(request: Request, exc: StarletteHTTPException):
-    """Global exception handler for all http errors"""
-    tb_str = traceback.format_exc()
+    """Global exception handler for all http errors"""    
     if exc.status_code >= 500:  # Only log traceback for server errors
         tb_str = traceback.format_exc()
         logger.error(

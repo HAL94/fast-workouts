@@ -4,9 +4,12 @@ import pytz
 
 from app.api.v1.workouts.schema import (
     CreateWorkoutScheduleRequest,
+    GetScheduleReminderSuggestionsRequest,
+    ScheduleSuggestionsResponse,
     WorkoutPlanScheduleReadPagination,
 )
 from app.api.v1.workouts.services import WorkoutScheduleService
+from app.api.v1.workouts.utils.schedule_time_validator import TimeReminderSuggestion
 from app.core.auth.jwt import validate_jwt
 from app.core.auth.schema import UserRead
 from app.core.common.app_response import AppResponse
@@ -32,6 +35,18 @@ async def get_workout_plan_schedules(
     print(f"{datetime.now().isoformat()}")
 
     return AppResponse(data=result)
+
+
+@router.get("/suggestions")
+async def get_schedule_reminder_suggestions(
+    payload: GetScheduleReminderSuggestionsRequest
+):
+    suggestions = TimeReminderSuggestion.get_reminder_suggestions(
+        payload.start_at)
+
+    data = ScheduleSuggestionsResponse.model_validate(suggestions)
+
+    return AppResponse(data=data)
 
 
 @router.get("/{workout_plan_schedule_id}")

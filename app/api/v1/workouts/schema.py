@@ -169,3 +169,16 @@ class UpdateWorkoutPlanRequest(AppBaseModel):
     comments: Optional[str] = None
 
     workout_exercise_plans: Optional[list[ExercisePlanUpdate]] = []
+
+
+# --- Get Schedule Suggestion Schema ---
+# Represents fetching suggestions for a schedule given a start date/time
+class GetScheduleReminderSuggestionsRequest(AppBaseModel):
+    start_at: datetime
+
+class ScheduleReminderSuggestionItem(AppBaseModel):
+    unit: str
+    value: int
+
+class ScheduleSuggestionsResponse(AppBaseModel):
+    suggestions: list[ScheduleReminderSuggestionItem] = []
