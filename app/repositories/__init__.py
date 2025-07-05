@@ -1,5 +1,7 @@
 from functools import cached_property
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.repositories.exercise_repository import ExerciseRepository
 from .workout_plan_repository import WorkoutPlanRepository
 from .exercise_plan_repository import ExercisePlanRepository
 from .exercise_set_plan_repository import ExerciseSetPlanRepository
@@ -10,6 +12,7 @@ all_repos = [
     ExercisePlanRepository,
     ExerciseSetPlanRepository,
     WorkoutScheduleRepository,
+    ExerciseRepository
 ]
 __all__ = all_repos
 
@@ -33,3 +36,7 @@ class Repos:
     @cached_property
     def workout_schedule(self) -> WorkoutScheduleRepository:
         return WorkoutScheduleRepository(session=self.session)
+
+    @cached_property
+    def exercise(self) -> ExerciseRepository:
+        return ExerciseRepository(session=self.session)

@@ -13,6 +13,10 @@ class Base(DeclarativeBase):
 
     def dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+    
+    @classmethod
+    def relations(cls):
+        return inspect(cls).relationships.items()
 
     @classmethod
     def columns(cls):

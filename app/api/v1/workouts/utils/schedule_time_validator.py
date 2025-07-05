@@ -1,10 +1,7 @@
 from datetime import datetime, timedelta
 import pytz
 
-
-def format_to_local_time(date: datetime):
-    return date.astimezone().strftime("%Y-%m-%d %H:%M:%S")
-
+from app.api.v1.workouts.utils.date_formatter import format_to_local_time
 
 class TimeValidation:
     """
@@ -63,7 +60,7 @@ class TimeValidation:
 
         return {
             "max_reached": start_at > max_future,
-            "too_close_to_now": start_at <= now,
+            "is_in_past": start_at <= now,
             "is_too_early": is_too_early
         }
 
@@ -254,11 +251,14 @@ class TimeReminderSuggestion:
         def mapper(item: int):
             if item >= 1440:
                 unit = "day"
+                item /= (24 * 60)  # convert to days
             elif item >= 60:
                 unit = "hour"
+                item = item / 60  # convert to hours
             else:
                 unit = "minutes"
-            return { "unit": unit, "value": item }
+
+            return {"unit": unit, "value": item}
 
         generated = list(map(mapper, initial_data))
 

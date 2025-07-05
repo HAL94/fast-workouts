@@ -97,7 +97,7 @@ class CreateWorkoutScheduleRequest(ScheduleBase):
 
         if start_at_validation.get("max_reached"):
             raise ValueError("Maximum reached")
-        elif start_at_validation.get("too_close_to_now"):
+        elif start_at_validation.get("is_in_past"):
             raise ValueError("Start time will be in the past")
         elif start_at_validation.get("is_too_early"):
             raise ValueError(
@@ -182,3 +182,6 @@ class ScheduleReminderSuggestionItem(AppBaseModel):
 
 class ScheduleSuggestionsResponse(AppBaseModel):
     suggestions: list[ScheduleReminderSuggestionItem] = []
+
+class ScheduleCreateResponse(ScheduleBase):
+    reminder_send_time: datetime

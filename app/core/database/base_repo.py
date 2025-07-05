@@ -107,12 +107,14 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
         try:
             # Process in batches to avoid memory issues with large datasets
             for i in range(0, len(data), batch_size):
-                batch = data[i : i + batch_size]
-                batch_values = [item.model_dump(exclude_none=True, by_alias=False) for item in batch]
+                batch = data[i: i + batch_size]
+                batch_values = [item.model_dump(
+                    exclude_none=True, by_alias=False) for item in batch]
 
                 # Use bulk insert with RETURNING to get created records
                 created_records = await session.scalars(
-                    insert(self._dbmodel).values(batch_values).returning(self._dbmodel)
+                    insert(self._dbmodel).values(
+                        batch_values).returning(self._dbmodel)
                 )
 
                 # Convert to list and extend main results
@@ -185,7 +187,8 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
 
         # Check if all data keys are index elements (would make update impossible)
         if len(data_keys - index_keys) == 0:
-            raise ValueError("Index elements match all data fields, upsert is invalid.")
+            raise ValueError(
+                "Index elements match all data fields, upsert is invalid.")
 
         try:
             # Use PostgreSQL's INSERT ... ON CONFLICT DO UPDATE
@@ -253,7 +256,8 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
                 index_elements = [self._dbmodel.id]
 
             index_elements = [
-                col.name if isinstance(col, InstrumentedAttribute) else str(col)
+                col.name if isinstance(
+                    col, InstrumentedAttribute) else str(col)
                 for col in index_elements
             ]
 
@@ -261,7 +265,8 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
 
             session = self.session
 
-            data_values = [item.model_dump(exclude_none=True, by_alias=False) for item in data]
+            data_values = [item.model_dump(
+                exclude_none=True, by_alias=False) for item in data]
             data_model_fields = data[0].model_fields
 
             data_keys = set(data_model_fields.keys())
@@ -349,9 +354,9 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
 
         if where_clause:
             where_cond.extend(where_clause)
-        
+
         stmt = select(self._dbmodel).where(*where_cond)
-        
+
         if relations:
             options = relations
             stmt = stmt.options(*options)
@@ -360,15 +365,44 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
 
         if result is None:
             raise NotFoundException
-        
+
         return_model = return_model or self._model
-        
+
         if relations:
             return return_model.model_validate(result, from_attributes=True)
         else:
             return return_model(**result.dict())
 
         # return return_model(**result.dict())
+    async def get_all(self,
+                      where_clause: list[ColumnElement[bool]] = [],
+                      order_clause: list[InstrumentedAttribute] = [],
+                      relations: list[_AbstractLoad] = None,
+                      return_model: Optional[BaseModel | PydanticModel] = None,
+                      ):
+        session = self.session
+
+        stmt = (
+            select(self._dbmodel)
+            .where(*where_clause)
+            .order_by(*order_clause)
+        )
+
+        if relations:
+            options = relations
+            stmt = stmt.options(*options)
+
+        result = await session.scalars(stmt)
+
+        return_model = return_model or self._model
+
+        if relations:
+            item_list = [return_model.model_validate(
+                item, from_attributes=True) for item in result.all()]
+        else:
+            item_list = [return_model(**item.dict()) for item in result.all()]
+
+        return item_list
 
     async def get_many(
         self,
@@ -376,6 +410,7 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
         size: int,
         where_clause: list[ColumnElement[bool]] = [],
         order_clause: list[InstrumentedAttribute] = [],
+        relations: list[_AbstractLoad] = None,
         return_model: Optional[BaseModel | PydanticModel] = None,
     ) -> PaginatedResponse[PydanticModel]:
         session = self.session
@@ -388,6 +423,10 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
             .limit(size)
         )
 
+        if relations:
+            options = relations
+            stmt = stmt.options(*options)
+
         result = await session.scalars(stmt)
 
         total_count = await session.scalar(
@@ -399,10 +438,16 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
         # print(f"total_count: {total_count}")
 
         return_model = return_model or self._model
-        
+
+        if relations:
+            item_list = [return_model.model_validate(
+                item, from_attributes=True) for item in result.all()]
+        else:
+            item_list = [return_model(**item.dict()) for item in result.all()]
+
         PaginatedResponse.__model__ = return_model
         return PaginatedResponse[PydanticModel](
-            result=[return_model(**item.dict()) for item in result.all()],
+            result=item_list,
             total_count=total_count,
             page=page,
             size=size,
@@ -571,7 +616,8 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
 
         session: AsyncSession = self.session
 
-        update_values = [item.model_dump(exclude_none=True, by_alias=False) for item in data]
+        update_values = [item.model_dump(
+            exclude_none=True, by_alias=False) for item in data]
 
         # unlike a single record update, a bulk update does not support RETURNING
         # it is best to update with `executemany` which receives a parameter sets

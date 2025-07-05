@@ -16,9 +16,12 @@ class JwtSettings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: float = 60.0
 
+class ResendSettings(BaseSettings):
+    EMAIL_SERVICE: str
+    
 # the only use case that I know of where multiple inheritance is acceptable, 
 # in general you should not do such a thing for your business-related code.
-class AppSettings(PostgresSettings, JwtSettings, RedisSettings):
+class AppSettings(PostgresSettings, JwtSettings, RedisSettings, ResendSettings):
     ENV: str = "prod"
     model_config = SettingsConfigDict(
         env_file='.env', env_file_encoding='utf-8')
