@@ -377,17 +377,12 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
                       where_clause: list[ColumnElement[bool]] = [],
                       order_clause: list[InstrumentedAttribute] = [],
                       options: list[_AbstractLoad] = None,
-                      joins: list[tuple[Base, ColumnElement[bool]]] = None,
                       return_model: Optional[BaseModel | PydanticModel] = None,
                       ):
         session = self.session
 
         stmt = select(self._dbmodel)
-
-        if joins:
-            for join_el in joins:
-                stmt = stmt.join(join_el[0], join_el[1])
-
+        
         stmt = stmt.where(*where_clause).order_by(*order_clause)
 
         if options:
@@ -460,7 +455,7 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
         field: InstrumentedAttribute | None = None,
         where_clause: list[ColumnElement[bool]] = None,
         return_model: Optional[BaseModel | PydanticModel] = None,
-    ):
+    ) -> PydanticModel:
         """
         Deletes a single record from the database matching the given criteria.
 

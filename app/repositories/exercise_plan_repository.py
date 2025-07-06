@@ -1,8 +1,6 @@
-from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from app.api.v1.workouts.schema import ExercisePlanBase, ExercisePlanCreate
 from app.core.database.base_repo import BaseRepo
-from app.core.exceptions import NotFoundException
 from app.models import WorkoutExercisePlan, WorkoutPlan
 
 
@@ -15,28 +13,17 @@ class ExercisePlanRepository(BaseRepo[WorkoutExercisePlan, ExercisePlanBase]):
         user_id: int,
         workout_plan_id: int,
         exercise_plan_id: int,
-        return_as_base: bool = False,
     ) -> ExercisePlanBase | WorkoutExercisePlan | None:
-        session = self.session
 
-        exercise_plan = await session.scalar(
-            select(WorkoutExercisePlan)
-            .options(selectinload(WorkoutExercisePlan.workout_exercise_set_plans))
-            .join(WorkoutPlan, WorkoutPlan.id == WorkoutExercisePlan.workout_plan_id)
-            .where(
+        exercise_plan = await self.get_one(
+            val=exercise_plan_id,
+            options=[selectinload(
+                WorkoutExercisePlan.workout_exercise_set_plans)],
+            where_clause=[
                 WorkoutExercisePlan.id == exercise_plan_id,
-                WorkoutPlan.id == workout_plan_id,
-                WorkoutPlan.user_id == user_id,
-            )
-        )
-
-        if not exercise_plan:
-            raise NotFoundException
-
-        if return_as_base:
-            return exercise_plan
-
-        return ExercisePlanBase(**exercise_plan.dict())
+                WorkoutPlan.id == workout_plan_id,  # implicit join with WorkoutPlan
+                WorkoutPlan.user_id == user_id])
+        return exercise_plan
 
     async def create_many_exercise_plans(
         self,
@@ -64,13 +51,11 @@ class ExercisePlanRepository(BaseRepo[WorkoutExercisePlan, ExercisePlanBase]):
     async def delete_exercise_plan(
         self, user_id: int, workout_plan_id: int, exercise_plan_id: int
     ) -> ExercisePlanBase:
-        result: WorkoutExercisePlan = await self.find_one_exercise_plan(
-            user_id=user_id,
-            workout_plan_id=workout_plan_id,
-            exercise_plan_id=exercise_plan_id,
-            return_as_base=True,
+        result = await self.delete_one(
+            val=exercise_plan_id,
+            field='id',
+            where_clause=[WorkoutExercisePlan.id == exercise_plan_id,
+                          WorkoutExercisePlan.workout_plan_id == workout_plan_id,
+                          WorkoutPlan.user_id == user_id]
         )
-        await self.session.delete(result)
-        await self.session.commit()
-
-        return ExercisePlanBase(**result.dict())
+        return result

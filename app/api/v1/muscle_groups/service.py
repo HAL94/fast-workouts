@@ -24,10 +24,9 @@ class MuscleGroupService:
             where_clause=pagination.filter_fields)
 
     async def get_exercises_by_muscle_group(self, muscle_group_id: int):
+        # implicit joins
         return await self.repos.exercise.get_all(
-            joins=[
-                (ExerciseMuscleGroup, ExerciseMuscleGroup.exercise_id == Exercise.id)],
-            where_clause=[
+            where_clause=[ExerciseMuscleGroup.exercise_id == Exercise.id,
                 ExerciseMuscleGroup.muscle_group_id == muscle_group_id],
             options=[selectinload(Exercise.categories)],
             return_model=ExerciseByMuscleResponse

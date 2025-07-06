@@ -40,7 +40,6 @@ class ExercisePlanService:
             user_id=user_id,
             workout_plan_id=workout_plan_id,
             exercise_plan_id=exercise_plan_id,
-            return_as_base=True,
         )
         old_order = old_exercise.order_in_plan
         new_order = payload.order_in_plan
