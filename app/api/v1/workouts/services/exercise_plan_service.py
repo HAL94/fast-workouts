@@ -1,7 +1,7 @@
 from sqlalchemy import asc, update
 from app.api.v1.schema.workout_plan import ExercisePlanBase
 from app.api.v1.workouts.schema import ExercisePlanReadPagination
-from app.models import WorkoutExercisePlan, WorkoutPlan
+from app.models import User, WorkoutExercisePlan, WorkoutPlan
 from app.repositories import Repos
 
 
@@ -13,20 +13,29 @@ class ExercisePlanService:
         self,
         workout_plan_id: int,
         user_id: int,
-        pagionation: ExercisePlanReadPagination,
+        pagination: ExercisePlanReadPagination,
     ):
-        # verify if workout plan belongs to user
-        await self.repos.workout_plan.get_one(
-            val=workout_plan_id, where_clause=[WorkoutPlan.user_id == user_id]
-        )
+        base_where_clause = [
+            WorkoutExercisePlan.workout_plan_id == WorkoutPlan.id,
+            WorkoutPlan.user_id == User.id,
+            User.id == user_id,
+            WorkoutPlan.id == workout_plan_id,
+        ]
+        base_order_clause = [asc(WorkoutExercisePlan.order_in_plan)]
+        
+        if pagination.skip:
+            return await self.repos.exercise_plan.get_all(where_clause=base_where_clause,
+                                                          order_clause=base_order_clause)
+
         return await self.repos.exercise_plan.get_many(
-            page=pagionation.page,
-            size=pagionation.size,
+            page=pagination.page,
+            size=pagination.size,
             where_clause=[
-                *pagionation.filter_fields,
-                WorkoutExercisePlan.workout_plan_id == workout_plan_id,
+                *pagination.filter_fields,
+                *base_where_clause
             ],
-            order_clause=[*pagionation.sort_fields, asc(WorkoutExercisePlan.order_in_plan)],
+            order_clause=[*pagination.sort_fields,
+                          *base_order_clause],
         )
 
     async def update_exercise_plan(

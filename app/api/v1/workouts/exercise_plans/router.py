@@ -21,11 +21,11 @@ router: APIRouter = APIRouter(
 async def get_exercise_plans(
     workout_plan_id: int,
     user_data: UserRead = Depends(validate_jwt),
-    pagionation: ExercisePlanReadPagination = Query(...),
+    pagination: ExercisePlanReadPagination = Query(...),
     exercise_plan_service: ExercisePlanService = Depends(get_exercise_plan_service),
 ):
     workout_exercise_plans = await exercise_plan_service.get_many_exercise_plans(
-        workout_plan_id=workout_plan_id, user_id=user_data.id, pagionation=pagionation
+        workout_plan_id=workout_plan_id, user_id=user_data.id, pagination=pagination
     )
 
     return AppResponse(data=workout_exercise_plans)

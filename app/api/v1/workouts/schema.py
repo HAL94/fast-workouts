@@ -24,7 +24,7 @@ WorkoutPlanPagination = PaginationFactory.create_pagination(
     sortable_fields=workout_plan_cols, filterable_fields=workout_plan_cols
 )
 class WorkoutPlanReadPagination(WorkoutPlanPagination):
-    skip: ClassVar[bool]  # exclude skip
+    pass
 
 
 exercise_plan_cols = WorkoutExercisePlan.columns()

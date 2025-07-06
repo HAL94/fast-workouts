@@ -39,7 +39,7 @@ async def get_exercise_set_plans(
     workout_plan_id: int,
     exercise_plan_id: int,
     user_data: UserRead = Depends(validate_jwt),
-    pagionation: ExerciseSetPlanReadPagination = Query(...),
+    pagination: ExerciseSetPlanReadPagination = Query(...),
     exercise_set_service: ExerciseSetPlanService = Depends(
         get_exercise_set_plan_service
     ),
@@ -48,7 +48,7 @@ async def get_exercise_set_plans(
         workout_plan_id=workout_plan_id,
         exercise_plan_id=exercise_plan_id,
         user_id=user_data.id,
-        pagionation=pagionation,
+        pagination=pagination,
     )
 
     return AppResponse(data=result)

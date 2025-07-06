@@ -1,7 +1,7 @@
 import enum
 from functools import cached_property
 from typing import Any, ClassVar, Optional
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from sqlalchemy import Boolean, ColumnElement, DateTime, Float, Integer, asc, desc
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 
@@ -12,10 +12,28 @@ from app.core.exceptions import BadRequestException
 
 
 class PaginationQuery(AppBaseModel):
-    page: int = Field(ge=1)
-    size: int = Field(ge=1)
+    page: Optional[int] = Field(None, ge=1)
+    size: Optional[int] = Field(None, ge=1)
     sort_by: Optional[str] = None
     filter_by: Optional[str] = None
+    skip: bool = Field(
+        False, description="If true, pagination (page and size) is skipped, and all records are fetched.")
+
+    @model_validator(mode='after')
+    def validate_pagination_fields(self) -> 'PaginationQuery':
+        if not self.skip:
+            # If skip is False, page and size must be provided
+            if self.page is None:
+                raise ValueError(
+                    "Page is required when pagination is not skipped (skip=False).")
+            if self.size is None:
+                raise ValueError(
+                    "Size is required when pagination is not skipped (skip=False).")
+        else:
+            # If skip is True, page and size should be None (or effectively ignored if present)
+            pass
+
+        return self
 
 
 class InvalidDatetimeValue(Exception):
@@ -213,7 +231,7 @@ class PaginationFactory:
 
         class CustomPaginationQuery(PaginationQuery):
             __model__: ClassVar[Base] = model
-            
+
             @cached_property
             def sort_fields(self):
                 return sort_parser._process_sort_fields(self.sort_by, self.__model__)

@@ -21,19 +21,22 @@ class WorkoutPlanService:
 
     async def get_many_workouts(
         self, user_data: UserRead, pagination: WorkoutPlanReadPagination
-    ) -> PaginatedResponse[WorkoutPlanReadPaginatedItem]:
-        # endpoint should also be paginated
-        workout_pagination = await self.repos.workout_plan.get_many(
-            page=pagination.page,
-            size=pagination.size,
-            where_clause=[*pagination.filter_fields,
-                          WorkoutPlan.user_id == user_data.id],
-            order_clause=pagination.sort_fields,
-        )
+    ) -> PaginatedResponse[WorkoutPlanReadPaginatedItem] | list[WorkoutPlanBase]:
+        if pagination.skip:
+            workout_ls = await self.repos.workout_plan.get_all(where_clause=[WorkoutPlan.user_id == user_data.id])
+        else:
+            workout_pagination = await self.repos.workout_plan.get_many(
+                page=pagination.page,
+                size=pagination.size,
+                where_clause=[*pagination.filter_fields,
+                            WorkoutPlan.user_id == user_data.id],
+                order_clause=pagination.sort_fields,
+            )
+            workout_ls = workout_pagination.result
 
         workout_plans: list[WorkoutPlanReadPaginatedItem] = []
 
-        for item in workout_pagination.result:
+        for item in workout_ls:
             exercise_count = (
                 await self.repos.workout_plan.get_exercise_count_for_workout(item.id)
             )
@@ -47,9 +50,11 @@ class WorkoutPlanService:
             )
             workout_plans.append(item_result)
 
-        workout_pagination.result = workout_plans
-
-        return workout_pagination
+        if pagination.skip:
+            return workout_ls
+        else:
+            workout_pagination.result = workout_plans
+            return workout_pagination
 
     async def get_workout_plan(
         self, user_data: UserRead, workout_plan_id: int

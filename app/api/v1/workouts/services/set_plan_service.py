@@ -1,7 +1,8 @@
 from sqlalchemy import asc, update
+from app.api.v1.schema import workout_plan
 from app.api.v1.schema.workout_plan import ExerciseSetPlanBase
 from app.api.v1.workouts.schema import ExerciseSetPlanReadPagination
-from app.models import WorkoutExerciseSetPlan
+from app.models import User, WorkoutExercisePlan, WorkoutExerciseSetPlan, WorkoutPlan
 from app.repositories import Repos
 
 
@@ -50,23 +51,32 @@ class ExerciseSetPlanService:
         workout_plan_id: int,
         user_id: int,
         exercise_plan_id: int,
-        pagionation: ExerciseSetPlanReadPagination,
+        pagination: ExerciseSetPlanReadPagination,
     ):
-        await self.repos.exercise_plan.find_one_exercise_plan(
-            user_id=user_id,
-            workout_plan_id=workout_plan_id,
-            exercise_plan_id=exercise_plan_id,
-        )
+        base_where_clause = [
+            WorkoutExerciseSetPlan.workout_exercise_plan_id == WorkoutExercisePlan.id,
+            WorkoutExercisePlan.workout_plan_id == WorkoutPlan.id,
+            WorkoutPlan.user_id == User.id,
+            User.id == user_id,
+            WorkoutPlan.id == workout_plan_id,
+            WorkoutExercisePlan.id == exercise_plan_id,
+        ]
+        base_order_clause = [asc(WorkoutExerciseSetPlan.set_number)]
+
+        if pagination.skip:
+            return await self.repos.exercise_set_plan.get_all(
+                where_clause=base_where_clause,
+                order_clause=base_order_clause)
 
         return await self.repos.exercise_set_plan.get_many(
-            page=pagionation.page,
-            size=pagionation.size,
+            page=pagination.page,
+            size=pagination.size,
             where_clause=[
-                *pagionation.filter_fields,
-                WorkoutExerciseSetPlan.workout_exercise_plan_id == exercise_plan_id,
+                *pagination.filter_fields,
+                *base_where_clause
             ],
-            order_clause=[*pagionation.sort_fields,
-                          asc(WorkoutExerciseSetPlan.set_number)],
+            order_clause=[*pagination.sort_fields,
+                          *base_order_clause],
         )
 
     async def delete_set_plan(
