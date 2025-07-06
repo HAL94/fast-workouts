@@ -324,7 +324,7 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
         val: Any,
         field: InstrumentedAttribute | str | None = None,
         where_clause: list[ColumnElement[bool]] = None,
-        relations: list[_AbstractLoad] = None,
+        options: list[_AbstractLoad] = None,
         return_model: Optional[BaseModel | PydanticModel] = None,
     ) -> PydanticModel:
         """
@@ -357,8 +357,7 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
 
         stmt = select(self._dbmodel).where(*where_cond)
 
-        if relations:
-            options = relations
+        if options:
             stmt = stmt.options(*options)
 
         result = await session.scalar(stmt)
@@ -368,7 +367,7 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
 
         return_model = return_model or self._model
 
-        if relations:
+        if options:
             return return_model.model_validate(result, from_attributes=True)
         else:
             return return_model(**result.dict())
@@ -377,26 +376,28 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
     async def get_all(self,
                       where_clause: list[ColumnElement[bool]] = [],
                       order_clause: list[InstrumentedAttribute] = [],
-                      relations: list[_AbstractLoad] = None,
+                      options: list[_AbstractLoad] = None,
+                      joins: list[tuple[Base, ColumnElement[bool]]] = None,
                       return_model: Optional[BaseModel | PydanticModel] = None,
                       ):
         session = self.session
 
-        stmt = (
-            select(self._dbmodel)
-            .where(*where_clause)
-            .order_by(*order_clause)
-        )
+        stmt = select(self._dbmodel)
 
-        if relations:
-            options = relations
+        if joins:
+            for join_el in joins:
+                stmt = stmt.join(join_el[0], join_el[1])
+
+        stmt = stmt.where(*where_clause).order_by(*order_clause)
+
+        if options:
             stmt = stmt.options(*options)
 
         result = await session.scalars(stmt)
 
         return_model = return_model or self._model
 
-        if relations:
+        if options:
             item_list = [return_model.model_validate(
                 item, from_attributes=True) for item in result.all()]
         else:

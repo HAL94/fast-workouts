@@ -19,15 +19,14 @@ class ExercisePlanService:
         await self.repos.workout_plan.get_one(
             val=workout_plan_id, where_clause=[WorkoutPlan.user_id == user_id]
         )
-        sort_by, filter_by = pagionation.convert_to_model(WorkoutExercisePlan)
         return await self.repos.exercise_plan.get_many(
             page=pagionation.page,
             size=pagionation.size,
             where_clause=[
-                *filter_by,
+                *pagionation.filter_fields,
                 WorkoutExercisePlan.workout_plan_id == workout_plan_id,
             ],
-            order_clause=[*sort_by, asc(WorkoutExercisePlan.order_in_plan)],
+            order_clause=[*pagionation.sort_fields, asc(WorkoutExercisePlan.order_in_plan)],
         )
 
     async def update_exercise_plan(

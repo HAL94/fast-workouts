@@ -6,6 +6,7 @@ from app.api.v1.workouts.schema import (
 from app.models import WorkoutPlanSchedule
 from app.repositories import Repos
 
+
 class WorkoutScheduleService:
     def __init__(self, repos: Repos):
         self.repos = repos
@@ -26,18 +27,17 @@ class WorkoutScheduleService:
         workout_plan_id: int,
         pagination: WorkoutPlanScheduleReadPagination,
     ):
-        sort_by, filter_by = pagination.convert_to_model(WorkoutPlanSchedule)
         page = pagination.page
         size = pagination.size
         return await self.repos.workout_schedule.get_many(
             page=page,
             size=size,
             where_clause=[
-                *filter_by,
+                *pagination.filter_fields,
                 WorkoutPlanSchedule.workout_plan_id == workout_plan_id,
                 WorkoutPlanSchedule.user_id == user_id,
             ],
-            order_clause=sort_by,
+            order_clause=pagination.sort_fields,
         )
 
     async def get_workout_schedule(

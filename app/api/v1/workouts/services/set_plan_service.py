@@ -57,15 +57,16 @@ class ExerciseSetPlanService:
             workout_plan_id=workout_plan_id,
             exercise_plan_id=exercise_plan_id,
         )
-        sort_by, filter_by = pagionation.convert_to_model(WorkoutExerciseSetPlan)
+
         return await self.repos.exercise_set_plan.get_many(
             page=pagionation.page,
             size=pagionation.size,
             where_clause=[
-                *filter_by,
+                *pagionation.filter_fields,
                 WorkoutExerciseSetPlan.workout_exercise_plan_id == exercise_plan_id,
             ],
-            order_clause=[*sort_by, asc(WorkoutExerciseSetPlan.set_number)],
+            order_clause=[*pagionation.sort_fields,
+                          asc(WorkoutExerciseSetPlan.set_number)],
         )
 
     async def delete_set_plan(
@@ -75,28 +76,27 @@ class ExerciseSetPlanService:
         exercise_plan_id: int,
         exercise_set_plan_id: int,
     ):
-        deleted_set =  await self.repos.exercise_set_plan.delete_exercise_set_plan(
+        deleted_set = await self.repos.exercise_set_plan.delete_exercise_set_plan(
             workout_plan_id=workout_plan_id,
             exercise_plan_id=exercise_plan_id,
             exercise_set_plan_id=exercise_set_plan_id,
             user_id=user_id,
         )
-        
+
         session = self.repos.session
         old_set_number = deleted_set.set_number
-        
+
         await session.execute(
             update(WorkoutExerciseSetPlan)
-           .where(
+            .where(
                 WorkoutExerciseSetPlan.workout_exercise_plan_id == exercise_plan_id,
                 WorkoutExerciseSetPlan.set_number > old_set_number,
             )
-           .values(set_number=WorkoutExerciseSetPlan.set_number - 1)
+            .values(set_number=WorkoutExerciseSetPlan.set_number - 1)
         )
         await session.commit()
-        
+
         return deleted_set
-        
 
     async def update_set_plan(
         self,

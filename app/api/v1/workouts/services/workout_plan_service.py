@@ -23,12 +23,12 @@ class WorkoutPlanService:
         self, user_data: UserRead, pagination: WorkoutPlanReadPagination
     ) -> PaginatedResponse[WorkoutPlanReadPaginatedItem]:
         # endpoint should also be paginated
-        sort_by, filter_by = pagination.convert_to_model(WorkoutPlan)
         workout_pagination = await self.repos.workout_plan.get_many(
             page=pagination.page,
             size=pagination.size,
-            where_clause=[*filter_by, WorkoutPlan.user_id == user_data.id],
-            order_clause=sort_by,
+            where_clause=[*pagination.filter_fields,
+                          WorkoutPlan.user_id == user_data.id],
+            order_clause=pagination.sort_fields,
         )
 
         workout_plans: list[WorkoutPlanReadPaginatedItem] = []

@@ -1,5 +1,6 @@
 import enum
-from typing import Any, Optional
+from functools import cached_property
+from typing import Any, ClassVar, Optional
 from pydantic import Field, field_validator
 from sqlalchemy import Boolean, ColumnElement, DateTime, Float, Integer, asc, desc
 from sqlalchemy.orm.attributes import InstrumentedAttribute
@@ -206,18 +207,23 @@ class PaginationFilterParser(PaginationParser):
 
 class PaginationFactory:
     @staticmethod
-    def create_pagination(sortable_fields: list[str] = [], filterable_fields: list[str] = []):
+    def create_pagination(model: Base, sortable_fields: list[str] = [], filterable_fields: list[str] = []):
         filter_parser = PaginationFilterParser()
         sort_parser = PaginationSortParser()
 
         class CustomPaginationQuery(PaginationQuery):
-            def convert_to_model(self, model: Base):
-                sort_by = sort_parser._process_sort_fields(self.sort_by, model)
-                filter_by = filter_parser._process_filter_fields(
-                    self.filter_by, model)
-                return sort_by, filter_by
+            __model__: ClassVar[Base] = model
+            
+            @cached_property
+            def sort_fields(self):
+                return sort_parser._process_sort_fields(self.sort_by, self.__model__)
+
+            @cached_property
+            def filter_fields(self):
+                return filter_parser._process_filter_fields(self.filter_by, self.__model__)
 
             @field_validator('sort_by')
+            @classmethod
             def validate_sort_fields(cls, v):
                 if not v:
                     return v
@@ -233,11 +239,12 @@ class PaginationFactory:
                 return v
 
             @field_validator('filter_by')
+            @classmethod
             def validate_filter_fields(cls, v):
                 if not v:
                     return v
                 filter_pairs = filter_parser.split_and_clean_fields(v)
-                
+
                 error_message = "Filtering not allowed on field '{field}'. Allowed fields are {allowed_fields}"
 
                 for pair in filter_pairs:

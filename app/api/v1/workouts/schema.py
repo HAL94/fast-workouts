@@ -20,18 +20,17 @@ from app.models import (
 # Represents pagination schema for workout plans, exercise plans and exercise sets plans
 workout_plan_cols = WorkoutPlan.columns()
 WorkoutPlanPagination = PaginationFactory.create_pagination(
+    WorkoutPlan,
     sortable_fields=workout_plan_cols, filterable_fields=workout_plan_cols
 )
-
-
 class WorkoutPlanReadPagination(WorkoutPlanPagination):
-    pass
+    skip: ClassVar[bool]  # exclude skip
 
 
 exercise_plan_cols = WorkoutExercisePlan.columns()
-WorkoutExercisePlanPagination = PaginationFactory.create_pagination(
-    sortable_fields=exercise_plan_cols, filterable_fields=exercise_plan_cols
-)
+WorkoutExercisePlanPagination = PaginationFactory.create_pagination(WorkoutExercisePlan,
+                                                                    sortable_fields=exercise_plan_cols, filterable_fields=exercise_plan_cols
+                                                                    )
 
 
 class ExercisePlanReadPagination(WorkoutExercisePlanPagination):
@@ -39,9 +38,9 @@ class ExercisePlanReadPagination(WorkoutExercisePlanPagination):
 
 
 exercise_set_plan_cols = WorkoutExerciseSetPlan.columns()
-ExerciseSetPlanPagination = PaginationFactory.create_pagination(
-    sortable_fields=exercise_set_plan_cols, filterable_fields=exercise_set_plan_cols
-)
+ExerciseSetPlanPagination = PaginationFactory.create_pagination(WorkoutExerciseSetPlan,
+                                                                sortable_fields=exercise_set_plan_cols, filterable_fields=exercise_set_plan_cols
+                                                                )
 
 
 class ExerciseSetPlanReadPagination(ExerciseSetPlanPagination):
@@ -49,11 +48,9 @@ class ExerciseSetPlanReadPagination(ExerciseSetPlanPagination):
 
 
 workout_schedule_cols = WorkoutPlanSchedule.columns()
-WorkoutPlanSchedulePagination = PaginationFactory.create_pagination(
-    sortable_fields=workout_schedule_cols, filterable_fields=workout_schedule_cols
-)
-
-
+WorkoutPlanSchedulePagination = PaginationFactory.create_pagination(WorkoutPlanSchedule,
+                                                                    sortable_fields=workout_schedule_cols, filterable_fields=workout_schedule_cols
+                                                                    )
 class WorkoutPlanScheduleReadPagination(WorkoutPlanSchedulePagination):
     pass
 
@@ -176,12 +173,15 @@ class UpdateWorkoutPlanRequest(AppBaseModel):
 class GetScheduleReminderSuggestionsRequest(AppBaseModel):
     start_at: datetime
 
+
 class ScheduleReminderSuggestionItem(AppBaseModel):
     unit: str
     value: int
 
+
 class ScheduleSuggestionsResponse(AppBaseModel):
     suggestions: list[ScheduleReminderSuggestionItem] = []
+
 
 class ScheduleCreateResponse(ScheduleBase):
     reminder_send_time: datetime
