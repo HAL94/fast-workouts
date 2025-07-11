@@ -10,8 +10,8 @@ from app.api.v1.workouts.utils.schedule_time_validator import TimeValidation
 from app.core.common.app_response import AppBaseModel
 from app.core.common.pagination_factory import PaginationFactory
 from app.models import (
-    WorkoutExercisePlan,
-    WorkoutExerciseSetPlan,
+    ExercisePlan,
+    ExerciseSetPlan,
     WorkoutPlan,
     WorkoutPlanSchedule,
 )
@@ -27,8 +27,8 @@ class WorkoutPlanReadPagination(WorkoutPlanPagination):
     pass
 
 
-exercise_plan_cols = WorkoutExercisePlan.columns()
-WorkoutExercisePlanPagination = PaginationFactory.create_pagination(WorkoutExercisePlan,
+exercise_plan_cols = ExercisePlan.columns()
+WorkoutExercisePlanPagination = PaginationFactory.create_pagination(ExercisePlan,
                                                                     sortable_fields=exercise_plan_cols, filterable_fields=exercise_plan_cols
                                                                     )
 
@@ -37,8 +37,8 @@ class ExercisePlanReadPagination(WorkoutExercisePlanPagination):
     pass
 
 
-exercise_set_plan_cols = WorkoutExerciseSetPlan.columns()
-ExerciseSetPlanPagination = PaginationFactory.create_pagination(WorkoutExerciseSetPlan,
+exercise_set_plan_cols = ExerciseSetPlan.columns()
+ExerciseSetPlanPagination = PaginationFactory.create_pagination(ExerciseSetPlan,
                                                                 sortable_fields=exercise_set_plan_cols, filterable_fields=exercise_set_plan_cols
                                                                 )
 
@@ -73,7 +73,7 @@ class ExerciseSetPlanCreate(ExerciseSetPlanBase):
 
 class ExercisePlanCreate(ExercisePlanBase):
     id: ClassVar[int]  # exclusion of id
-    workout_exercise_set_plans: list["ExerciseSetPlanCreate"]
+    exercise_set_plans: list["ExerciseSetPlanCreate"]
 
 
 class CreateWorkoutScheduleRequest(ScheduleBase):
@@ -136,7 +136,7 @@ class CreateWorkoutPlanRequest(AppBaseModel):
     comments: Optional[str] = None
     user_id: Optional[int] = None
 
-    workout_exercise_plans: Optional[list[ExercisePlanCreate]] = None
+    exercise_plans: Optional[list[ExercisePlanCreate]] = None
 
 
 # --- Update Workout Schema ---
@@ -154,7 +154,7 @@ class ExercisePlanUpdate(AppBaseModel):
     exercise_id: Optional[int]
     order_in_plan: Optional[int]
     target_sets: Optional[int]
-    workout_exercise_set_plans: Optional[list["ExerciseSetPlanUpdate"]] = []
+    exercise_set_plans: Optional[list["ExerciseSetPlanUpdate"]] = []
     target_duration_minutes: Optional[float] = None
     notes: Optional[str] = None
 
@@ -165,7 +165,7 @@ class UpdateWorkoutPlanRequest(AppBaseModel):
     description: Optional[str] = None
     comments: Optional[str] = None
 
-    workout_exercise_plans: Optional[list[ExercisePlanUpdate]] = []
+    exercise_plans: Optional[list[ExercisePlanUpdate]] = []
 
 
 # --- Get Schedule Suggestion Schema ---

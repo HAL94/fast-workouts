@@ -1,8 +1,8 @@
-"""workout_exercises_sets_results
+"""workout_exercises_sets_results_refactor
 
-Revision ID: 9ebbf6e66081
+Revision ID: 92382daa25fe
 Revises: 07185670e2c8
-Create Date: 2025-06-22 13:48:59.448410
+Create Date: 2025-07-11 21:15:12.666520
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '9ebbf6e66081'
+revision: str = '92382daa25fe'
 down_revision: Union[str, None] = '07185670e2c8'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -32,7 +32,7 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('workout_exercise_plans',
+    op.create_table('exercise_plans',
     sa.Column('order_in_plan', sa.Integer(), nullable=False),
     sa.Column('target_sets', sa.Integer(), nullable=False),
     sa.Column('target_duration_minutes', sa.Float(), nullable=True),
@@ -47,7 +47,7 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('workout_plan_schedules',
-    sa.Column('start_at', sa.DateTime(), nullable=False),
+    sa.Column('start_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('end_time', sa.DateTime(), nullable=True),
     sa.Column('remind_before_minutes', sa.Integer(), nullable=True),
     sa.Column('user_id', sa.Integer(), nullable=False),
@@ -61,16 +61,16 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_workout_plan_schedules_end_time'), 'workout_plan_schedules', ['end_time'], unique=False)
     op.create_index(op.f('ix_workout_plan_schedules_start_at'), 'workout_plan_schedules', ['start_at'], unique=False)
-    op.create_table('workout_exercise_set_plans',
+    op.create_table('exercise_set_plans',
     sa.Column('set_number', sa.Integer(), nullable=False),
     sa.Column('target_reps', sa.Integer(), nullable=False),
     sa.Column('target_weight', sa.Float(), nullable=False),
     sa.Column('target_duration_seconds', sa.Integer(), nullable=True),
-    sa.Column('workout_exercise_plan_id', sa.Integer(), nullable=False),
+    sa.Column('exercise_plan_id', sa.Integer(), nullable=False),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
-    sa.ForeignKeyConstraint(['workout_exercise_plan_id'], ['workout_exercise_plans.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['exercise_plan_id'], ['exercise_plans.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('workout_sessions',
@@ -91,33 +91,33 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['workout_plan_id'], ['workout_plans.id'], ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('workout_session_exercise_results',
+    op.create_table('exercise_results',
     sa.Column('sets_achieved', sa.Integer(), nullable=False),
     sa.Column('duration_minutes_achieved', sa.Float(), nullable=True),
-    sa.Column('workout_exercise_plan_id', sa.Integer(), nullable=True),
+    sa.Column('exercise_plan_id', sa.Integer(), nullable=True),
     sa.Column('exercise_id', sa.Integer(), nullable=False),
     sa.Column('workout_session_id', sa.Integer(), nullable=False),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
     sa.ForeignKeyConstraint(['exercise_id'], ['exercises.id'], ),
-    sa.ForeignKeyConstraint(['workout_exercise_plan_id'], ['workout_exercise_plans.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['exercise_plan_id'], ['exercise_plans.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['workout_session_id'], ['workout_sessions.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('workout_session_exercise_set_results',
+    op.create_table('exercise_set_results',
     sa.Column('set_number', sa.Integer(), nullable=False),
     sa.Column('reps_achieved', sa.Integer(), nullable=False),
     sa.Column('weight_achieved', sa.Float(), nullable=False),
     sa.Column('duration_seconds', sa.Integer(), nullable=True),
     sa.Column('rpe', sa.Integer(), nullable=True),
-    sa.Column('session_exercise_result_id', sa.Integer(), nullable=False),
-    sa.Column('workout_exercise_set_plan_id', sa.Integer(), nullable=False),
+    sa.Column('exercise_result_id', sa.Integer(), nullable=False),
+    sa.Column('exercise_set_plan_id', sa.Integer(), nullable=False),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
-    sa.ForeignKeyConstraint(['session_exercise_result_id'], ['workout_session_exercise_results.id'], ),
-    sa.ForeignKeyConstraint(['workout_exercise_set_plan_id'], ['workout_exercise_set_plans.id'], ),
+    sa.ForeignKeyConstraint(['exercise_result_id'], ['exercise_results.id'], ),
+    sa.ForeignKeyConstraint(['exercise_set_plan_id'], ['exercise_set_plans.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     # ### end Alembic commands ###
@@ -126,13 +126,13 @@ def upgrade() -> None:
 def downgrade() -> None:
     """Downgrade schema."""
     # ### commands auto generated by Alembic - please adjust! ###
-    op.drop_table('workout_session_exercise_set_results')
-    op.drop_table('workout_session_exercise_results')
+    op.drop_table('exercise_set_results')
+    op.drop_table('exercise_results')
     op.drop_table('workout_sessions')
-    op.drop_table('workout_exercise_set_plans')
+    op.drop_table('exercise_set_plans')
     op.drop_index(op.f('ix_workout_plan_schedules_start_at'), table_name='workout_plan_schedules')
     op.drop_index(op.f('ix_workout_plan_schedules_end_time'), table_name='workout_plan_schedules')
     op.drop_table('workout_plan_schedules')
-    op.drop_table('workout_exercise_plans')
+    op.drop_table('exercise_plans')
     op.drop_table('workout_plans')
     # ### end Alembic commands ###

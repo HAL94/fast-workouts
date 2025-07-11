@@ -11,7 +11,7 @@ class WorkoutPlanBase(AppBaseModel):
     description: Optional[str] = None
     comments: Optional[str] = None
     user_id: Optional[int] = None
-    workout_exercise_plans: Optional[list["ExercisePlanBase"]] = None
+    exercise_plans: Optional[list["ExercisePlanBase"]] = None
 
 
 class ExercisePlanBase(AppBaseModel):
@@ -24,7 +24,7 @@ class ExercisePlanBase(AppBaseModel):
     workout_plan_id: Optional[int] = None
     created_at: Optional[str | datetime] = None
     updated_at: Optional[str | datetime] = None
-    workout_exercise_set_plans: Optional[list["ExerciseSetPlanBase"]] = None
+    exercise_set_plans: Optional[list["ExerciseSetPlanBase"]] = None
 
 
 class ExerciseSetPlanBase(AppBaseModel):
@@ -33,7 +33,7 @@ class ExerciseSetPlanBase(AppBaseModel):
     target_reps: int
     target_weight: float
     target_duration_seconds: Optional[int] = None
-    workout_exercise_plan_id: Optional[int] = None
+    exercise_plan_id: Optional[int] = None
     created_at: Optional[str | datetime] = None
     updated_at: Optional[str | datetime] = None
 

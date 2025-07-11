@@ -583,6 +583,7 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
         data: list[BaseModel],
         field: Any = "id",
         return_model: Optional[BaseModel | PydanticModel] = None,
+        commit: bool = True
     ) -> list[PydanticModel]:
         """
         We expect that data is a list of dictionaries, where each dictionary element will have a field acting (ideally) as primary key, or at least it should be unique. This field should be passed to the `field` argument in this function.
@@ -618,8 +619,9 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
         # unlike a single record update, a bulk update does not support RETURNING
         # it is best to update with `executemany` which receives a parameter sets
         await session.execute(update(self._dbmodel), update_values)
-
-        await session.commit()
+        
+        if commit:
+            await session.commit()
 
         field_values = [item.get(field) for item in update_values]
 

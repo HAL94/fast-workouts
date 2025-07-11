@@ -24,10 +24,10 @@ class User(Base):
 
     # relationships
     workout_plans: Mapped[list["WorkoutPlan"]] = relationship(back_populates="user")
-    workout_plan_sessions: Mapped[list["WorkoutSession"]] = relationship(
+    workout_sessions: Mapped[list["WorkoutSession"]] = relationship(
         back_populates="user"
     )
-    workout_plan_schedules: Mapped[list["WorkoutPlanSchedule"]] = relationship(
+    workout_schedules: Mapped[list["WorkoutPlanSchedule"]] = relationship(
         back_populates="user"
     )
 
@@ -147,7 +147,7 @@ class Exercise(Base):
         back_populates="exercises",  # Points to the 'exercises' relationship on the Category model
         viewonly=True,  # Prevents SQLAlchemy from trying to write to the secondary table directly
     )
-    workout_exercise_plans: Mapped[list["WorkoutExercisePlan"]] = relationship(
+    exercise_plans: Mapped[list["ExercisePlan"]] = relationship(
         back_populates="exercise"
     )
 
@@ -162,16 +162,16 @@ class WorkoutPlan(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     user: Mapped["User"] = relationship(back_populates="workout_plans")
 
-    workout_plan_schedules: Mapped[list["WorkoutPlanSchedule"]] = relationship(
+    workout_schedules: Mapped[list["WorkoutPlanSchedule"]] = relationship(
         back_populates="workout_plan",
         cascade="all, delete-orphan",
     )
 
-    workout_plan_sessions: Mapped[list["WorkoutSession"]] = relationship(
+    workout_sessions: Mapped[list["WorkoutSession"]] = relationship(
         back_populates="workout_plan"
     )
 
-    workout_exercise_plans: Mapped[list["WorkoutExercisePlan"]] = relationship(
+    exercise_plans: Mapped[list["ExercisePlan"]] = relationship(
         back_populates="workout_plan", cascade="all, delete-orphan"
     )
 
@@ -184,13 +184,13 @@ class WorkoutPlanSchedule(Base):
 
     # relationships
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
-    user: Mapped["User"] = relationship(back_populates="workout_plan_schedules")
+    user: Mapped["User"] = relationship(back_populates="workout_schedules")
 
     workout_plan_id: Mapped[int] = mapped_column(
         ForeignKey("workout_plans.id", ondelete="CASCADE")
     )
     workout_plan: Mapped["WorkoutPlan"] = relationship(
-        back_populates="workout_plan_schedules"
+        back_populates="workout_schedules"
     )
 
 class WorkoutSession(Base):
@@ -205,27 +205,27 @@ class WorkoutSession(Base):
 
     # relationships
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
-    user: Mapped["User"] = relationship(back_populates="workout_plan_sessions")
+    user: Mapped["User"] = relationship(back_populates="workout_sessions")
 
     workout_plan_id: Mapped["WorkoutPlan"] = mapped_column(
         ForeignKey("workout_plans.id", ondelete="SET NULL"), nullable=True
     )
     workout_plan: Mapped["WorkoutPlan"] = relationship(
-        back_populates="workout_plan_sessions"
+        back_populates="workout_sessions"
     )
 
     schedule_id: Mapped[int] = mapped_column(
         ForeignKey("workout_plan_schedules.id"), nullable=True
     )
-    workout_session_results: Mapped[list["WorkoutSessionExerciseResult"]] = relationship(
+    workout_session_results: Mapped[list["ExerciseResult"]] = relationship(
         back_populates="workout_session"
     )
 
-class WorkoutExercisePlan(Base):
+class ExercisePlan(Base):
     """
-    Describes an exercise plan for a specific workout plan. It also acts as a parent of `workout_exercise_set_plans` list.
+    Describes an exercise plan for a specific workout plan. It also acts as a parent of `exercise_set_plans` list.
     """
-    __tablename__ = "workout_exercise_plans"
+    __tablename__ = "exercise_plans"
 
     order_in_plan: Mapped[int] = mapped_column(nullable=False)
     target_sets: Mapped[int] = mapped_column(nullable=False)
@@ -234,64 +234,64 @@ class WorkoutExercisePlan(Base):
 
     # relationships
     exercise_id: Mapped[int] = mapped_column(ForeignKey("exercises.id"))
-    exercise: Mapped["Exercise"] = relationship(back_populates="workout_exercise_plans")
+    exercise: Mapped["Exercise"] = relationship(back_populates="exercise_plans")
 
     workout_plan_id: Mapped[int] = mapped_column(
         ForeignKey("workout_plans.id", ondelete="CASCADE")
     )
     workout_plan: Mapped["WorkoutPlan"] = relationship(
-        back_populates="workout_exercise_plans"
+        back_populates="exercise_plans"
     )
     
-    workout_exercise_set_plans: Mapped[list["WorkoutExerciseSetPlan"]] = relationship(
-        back_populates="workout_exercise_plan", cascade="all, delete-orphan"
+    exercise_set_plans: Mapped[list["ExerciseSetPlan"]] = relationship(
+        back_populates="exercise_plan", cascade="all, delete-orphan"
     )
     
-    workout_exercise_results: Mapped[list["WorkoutSessionExerciseResult"]] = relationship(
-        back_populates="workout_exercise_plan"
+    exercise_results: Mapped[list["ExerciseResult"]] = relationship(
+        back_populates="exercise_plan"
     )
 
-class WorkoutExerciseSetPlan(Base):
+class ExerciseSetPlan(Base):
     """
     Describes an exercise set plan for a specific exercise plan. It also acts as a parent of `workout_session_exercise_set_results` list.
     """
-    __tablename__ = "workout_exercise_set_plans"
+    __tablename__ = "exercise_set_plans"
 
     set_number: Mapped[int] = mapped_column(nullable=False)
     target_reps: Mapped[int] = mapped_column(nullable=False)
     target_weight: Mapped[float] = mapped_column(nullable=False)
     target_duration_seconds: Mapped[int] = mapped_column(nullable=True)
     
-    workout_exercise_plan_id: Mapped[int] = mapped_column(
-        ForeignKey("workout_exercise_plans.id", ondelete="CASCADE")
+    exercise_plan_id: Mapped[int] = mapped_column(
+        ForeignKey("exercise_plans.id", ondelete="CASCADE")
     )
-    workout_exercise_plan: Mapped["WorkoutExercisePlan"] = relationship(
-        back_populates="workout_exercise_set_plans"
+    exercise_plan: Mapped["ExercisePlan"] = relationship(
+        back_populates="exercise_set_plans"
     )
     
-    workout_session_exercise_set_results: Mapped[list["WorkoutSessionExerciseSetResult"]] = relationship(
-        back_populates="workout_exercise_set_plan"
+    exercise_set_results: Mapped[list["ExerciseSetResult"]] = relationship(
+        back_populates="exercise_set_plan"
     )
 
-class WorkoutSessionExerciseResult(Base):
+class ExerciseResult(Base):
     """ 
         Describes an exercise results for a specific session for a given exercise plan. 
     """
-    __tablename__ = "workout_session_exercise_results"
+    __tablename__ = "exercise_results"
 
     sets_achieved: Mapped[int] = mapped_column(nullable=False)
     duration_minutes_achieved: Mapped[float] = mapped_column(nullable=True)
 
     # relationships
-    workout_exercise_plan_id: Mapped[int] = mapped_column(
-        ForeignKey("workout_exercise_plans.id", ondelete="SET NULL"), nullable=True
+    exercise_plan_id: Mapped[int] = mapped_column(
+        ForeignKey("exercise_plans.id", ondelete="SET NULL"), nullable=True
     )
-    workout_exercise_plan: Mapped["WorkoutExercisePlan"] = relationship(
-        back_populates="workout_exercise_results"
+    exercise_plan: Mapped["ExercisePlan"] = relationship(
+        back_populates="exercise_results"
     )
-    workout_session_exercise_set_results: Mapped[
-        list["WorkoutSessionExerciseSetResult"]
-    ] = relationship(back_populates="workout_session_exercise_result")
+    exercise_set_results: Mapped[
+        list["ExerciseSetResult"]
+    ] = relationship(back_populates="session_exercise_result")
     exercise_id: Mapped[int] = mapped_column(ForeignKey("exercises.id"))   
 
     workout_session_id: Mapped[int] = mapped_column(ForeignKey("workout_sessions.id"))
@@ -299,8 +299,8 @@ class WorkoutSessionExerciseResult(Base):
         back_populates="workout_session_results"
     )
 
-class WorkoutSessionExerciseSetResult(Base):
-    __tablename__ = "workout_session_exercise_set_results"
+class ExerciseSetResult(Base):
+    __tablename__ = "exercise_set_results"
 
     set_number: Mapped[int] = mapped_column(Integer, nullable=False)
     reps_achieved: Mapped[int] = mapped_column(nullable=False)
@@ -310,15 +310,15 @@ class WorkoutSessionExerciseSetResult(Base):
         Integer, nullable=True
     )  # Rate of Perceived Exertion (1-10)
 
-    session_exercise_result_id: Mapped[int] = mapped_column(
-        ForeignKey("workout_session_exercise_results.id")
+    exercise_result_id: Mapped[int] = mapped_column(
+        ForeignKey("exercise_results.id")
     )
-    workout_session_exercise_result: Mapped["WorkoutSessionExerciseResult"] = (
-        relationship(back_populates="workout_session_exercise_set_results")
+    session_exercise_result: Mapped["ExerciseResult"] = (
+        relationship(back_populates="exercise_set_results")
     )
-    workout_exercise_set_plan_id: Mapped[int] = mapped_column(
-        ForeignKey("workout_exercise_set_plans.id")
+    exercise_set_plan_id: Mapped[int] = mapped_column(
+        ForeignKey("exercise_set_plans.id")
     )
-    workout_exercise_set_plan: Mapped["WorkoutExerciseSetPlan"] = relationship(
-        back_populates="workout_session_exercise_set_results"
+    exercise_set_plan: Mapped["ExerciseSetPlan"] = relationship(
+        back_populates="exercise_set_results"
     )

@@ -6,8 +6,8 @@ from app.api.v1.workouts.schema import (
 from app.core.database.base_repo import BaseRepo
 from app.models import (
     ExerciseMuscleGroup,
+    ExercisePlan,
     MuscleGroup,
-    WorkoutExercisePlan,
     WorkoutPlan,
 )
 
@@ -30,10 +30,10 @@ class WorkoutPlanRepository(BaseRepo[WorkoutPlan, WorkoutPlanBase]):
                 ExerciseMuscleGroup.muscle_group_id == MuscleGroup.id,
             )
             .join(
-                WorkoutExercisePlan,
-                ExerciseMuscleGroup.exercise_id == WorkoutExercisePlan.exercise_id,
+                ExercisePlan,
+                ExerciseMuscleGroup.exercise_id == ExercisePlan.exercise_id,
             )
-            .where(WorkoutExercisePlan.workout_plan_id == workout_id)
+            .where(ExercisePlan.workout_plan_id == workout_id)
             .group_by(MuscleGroup.muscle_target)
         )
 
@@ -42,8 +42,8 @@ class WorkoutPlanRepository(BaseRepo[WorkoutPlan, WorkoutPlanBase]):
     
     async def get_exercise_count_for_workout(self, workout_id: int) -> int:
         exercises_count_stmt = select(func.count()).select_from(
-            select(WorkoutExercisePlan)
-            .where(WorkoutExercisePlan.workout_plan_id == workout_id)
+            select(ExercisePlan)
+            .where(ExercisePlan.workout_plan_id == workout_id)
             .subquery()
         )
 

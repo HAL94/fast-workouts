@@ -1,7 +1,7 @@
 from sqlalchemy import asc, update
 from app.api.v1.schema.workout_plan import ExerciseSetPlanBase
 from app.api.v1.workouts.schema import ExerciseSetPlanReadPagination
-from app.models import User, WorkoutExercisePlan, WorkoutExerciseSetPlan, WorkoutPlan
+from app.models import ExercisePlan, ExerciseSetPlan, User, WorkoutPlan
 from app.repositories import Repos
 
 
@@ -51,14 +51,14 @@ class ExerciseSetPlanService:
         pagination: ExerciseSetPlanReadPagination,
     ):
         base_where_clause = [
-            WorkoutExerciseSetPlan.workout_exercise_plan_id == WorkoutExercisePlan.id,
-            WorkoutExercisePlan.workout_plan_id == WorkoutPlan.id,
+            ExerciseSetPlan.exercise_plan_id == ExercisePlan.id,
+            ExercisePlan.workout_plan_id == WorkoutPlan.id,
             WorkoutPlan.user_id == User.id,
             User.id == user_id,
             WorkoutPlan.id == workout_plan_id,
-            WorkoutExercisePlan.id == exercise_plan_id,
+            ExercisePlan.id == exercise_plan_id,
         ]
-        base_order_clause = [asc(WorkoutExerciseSetPlan.set_number)]
+        base_order_clause = [asc(ExerciseSetPlan.set_number)]
 
         if pagination.skip:
             return await self.repos.exercise_set_plan.get_all(
@@ -94,12 +94,12 @@ class ExerciseSetPlanService:
         old_set_number = deleted_set.set_number
 
         await session.execute(
-            update(WorkoutExerciseSetPlan)
+            update(ExerciseSetPlan)
             .where(
-                WorkoutExerciseSetPlan.workout_exercise_plan_id == exercise_plan_id,
-                WorkoutExerciseSetPlan.set_number > old_set_number,
+                ExerciseSetPlan.workout_exercise_plan_id == exercise_plan_id,
+                ExerciseSetPlan.set_number > old_set_number,
             )
-            .values(set_number=WorkoutExerciseSetPlan.set_number - 1)
+            .values(set_number=ExerciseSetPlan.set_number - 1)
         )
         await session.commit()
 
@@ -127,31 +127,31 @@ class ExerciseSetPlanService:
             # Moving item up (e.g., from order 5 to order 2)
             # Increment order_in_plan for items that were between new_order and old_order-1
             await session.execute(
-                update(WorkoutExerciseSetPlan)
+                update(ExerciseSetPlan)
                 .where(
-                    WorkoutExerciseSetPlan.workout_exercise_plan_id == exercise_plan_id,
-                    WorkoutExerciseSetPlan.set_number >= new_order,
-                    WorkoutExerciseSetPlan.set_number < old_order,
-                    WorkoutExerciseSetPlan.id
+                    ExerciseSetPlan.exercise_plan_id == exercise_plan_id,
+                    ExerciseSetPlan.set_number >= new_order,
+                    ExerciseSetPlan.set_number < old_order,
+                    ExerciseSetPlan.id
                     != exercise_set_plan_id,  # Exclude the target item itself
                 )
-                .values(set_number=WorkoutExerciseSetPlan.set_number + 1)
+                .values(set_number=ExerciseSetPlan.set_number + 1)
             )
         elif new_order > old_order:  # new_order > old_order
             # Moving item down (e.g., from order 2 to order 5)
             # Decrement order_in_plan for items that were between old_order+1 and new_order
             await session.execute(
-                update(WorkoutExerciseSetPlan)
+                update(ExerciseSetPlan)
                 .where(
-                    WorkoutExerciseSetPlan.workout_exercise_plan_id == exercise_plan_id,
-                    WorkoutExerciseSetPlan.set_number > old_order,
-                    WorkoutExerciseSetPlan.set_number <= new_order,
-                    WorkoutExerciseSetPlan.id
+                    ExerciseSetPlan.exercise_plan_id == exercise_plan_id,
+                    ExerciseSetPlan.set_number > old_order,
+                    ExerciseSetPlan.set_number <= new_order,
+                    ExerciseSetPlan.id
                     != exercise_set_plan_id,  # Exclude the target item itself
                 )
-                .values(set_number=WorkoutExerciseSetPlan.set_number - 1)
+                .values(set_number=ExerciseSetPlan.set_number - 1)
             )
         return await self.repos.exercise_set_plan.update_one(
             data=payload,
-            where_clause=[WorkoutExerciseSetPlan.id == exercise_set_plan_id],
+            where_clause=[ExerciseSetPlan.id == exercise_set_plan_id],
         )

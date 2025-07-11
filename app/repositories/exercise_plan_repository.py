@@ -1,11 +1,11 @@
 from sqlalchemy.orm import selectinload
 from app.api.v1.workouts.schema import ExercisePlanBase, ExercisePlanCreate
 from app.core.database.base_repo import BaseRepo
-from app.models import WorkoutExercisePlan, WorkoutPlan
+from app.models import ExercisePlan, WorkoutPlan
 
 
-class ExercisePlanRepository(BaseRepo[WorkoutExercisePlan, ExercisePlanBase]):
-    __dbmodel__ = WorkoutExercisePlan
+class ExercisePlanRepository(BaseRepo[ExercisePlan, ExercisePlanBase]):
+    __dbmodel__ = ExercisePlan
     __model__ = ExercisePlanBase
 
     async def find_one_exercise_plan(
@@ -13,13 +13,13 @@ class ExercisePlanRepository(BaseRepo[WorkoutExercisePlan, ExercisePlanBase]):
         user_id: int,
         workout_plan_id: int,
         exercise_plan_id: int,
-    ) -> ExercisePlanBase | WorkoutExercisePlan | None:
+    ) -> ExercisePlanBase | ExercisePlan | None:
         exercise_plan = await self.get_one(
             val=exercise_plan_id,
             options=[selectinload(
-                WorkoutExercisePlan.workout_exercise_set_plans)],
+                ExercisePlan.workout_exercise_set_plans)],
             where_clause=[
-                WorkoutExercisePlan.id == exercise_plan_id,
+                ExercisePlan.id == exercise_plan_id,
                 WorkoutPlan.id == workout_plan_id,  # implicit join with WorkoutPlan
                 WorkoutPlan.user_id == user_id])
         return exercise_plan
@@ -37,7 +37,7 @@ class ExercisePlanRepository(BaseRepo[WorkoutExercisePlan, ExercisePlanBase]):
                 **exercise_plan.model_dump(
                     exclude_unset=True,
                     by_alias=False,
-                    exclude={"workout_exercise_set_plans": True},
+                    exclude={"exercise_set_plans": True},
                 ),
                 workout_plan_id=workout_id,
             )
@@ -53,8 +53,8 @@ class ExercisePlanRepository(BaseRepo[WorkoutExercisePlan, ExercisePlanBase]):
         result = await self.delete_one(
             val=exercise_plan_id,
             field='id',
-            where_clause=[WorkoutExercisePlan.id == exercise_plan_id,
-                          WorkoutExercisePlan.workout_plan_id == workout_plan_id,
+            where_clause=[ExercisePlan.id == exercise_plan_id,
+                          ExercisePlan.workout_plan_id == workout_plan_id,
                           WorkoutPlan.user_id == user_id]
         )
         return result

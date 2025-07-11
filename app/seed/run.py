@@ -11,17 +11,17 @@ from app.seed.user_seed import UserSeed
 from app.core.config import settings
 import inspect
 
-from app.seed.workout_exercise_plan_seed import WorkoutExercisePlanSeed
-from app.seed.workout_exercise_set_plan_seed import WorkoutExerciseSetPlanSeed
-from app.seed.workout_plan_schedule_seed import WorkoutPlanScheduleSeed
-from app.seed.workout_plan_seed import WorkoutPlanSeed
-from app.seed.workout_session_exercise_result_set_seed import (
-    WorkoutSessionExerciseResultSetSeed,
-)
-from app.seed.workout_session_exercise_results_seed import (
-    WorkoutSessionExerciseResultsSeed,
-)
-from app.seed.workout_session_seed import WorkoutSessionSeed
+# from app.seed.workout_exercise_plan_seed import WorkoutExercisePlanSeed
+# from app.seed.workout_exercise_set_plan_seed import WorkoutExerciseSetPlanSeed
+# from app.seed.workout_plan_schedule_seed import WorkoutPlanScheduleSeed
+# from app.seed.workout_plan_seed import WorkoutPlanSeed
+# from app.seed.workout_session_exercise_result_set_seed import (
+#     WorkoutSessionExerciseResultSetSeed,
+# )
+# from app.seed.workout_session_exercise_results_seed import (
+#     WorkoutSessionExerciseResultsSeed,
+# )
+# from app.seed.workout_session_seed import WorkoutSessionSeed
 
 
 DATABASE_URL = URL.create(

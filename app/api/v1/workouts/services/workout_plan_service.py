@@ -10,7 +10,7 @@ from app.api.v1.workouts.schema import (
 )
 from app.core.auth.schema import UserRead
 from app.models import (
-    WorkoutExercisePlan,
+    ExercisePlan,
     WorkoutPlan,
 )
 
@@ -29,7 +29,7 @@ class WorkoutPlanService:
                 page=pagination.page,
                 size=pagination.size,
                 where_clause=[*pagination.filter_fields,
-                            WorkoutPlan.user_id == user_data.id],
+                              WorkoutPlan.user_id == user_data.id],
                 order_clause=pagination.sort_fields,
             )
             workout_ls = workout_pagination.result
@@ -63,8 +63,8 @@ class WorkoutPlanService:
             val=workout_plan_id,
             where_clause=[WorkoutPlan.user_id == user_data.id],
             relations=[
-                selectinload(WorkoutPlan.workout_exercise_plans).selectinload(
-                    WorkoutExercisePlan.workout_exercise_set_plans
+                selectinload(WorkoutPlan.exercise_plans).selectinload(
+                    ExercisePlan.exercise_set_plans
                 )
             ],
         )
@@ -87,21 +87,25 @@ class WorkoutPlanService:
                 WorkoutPlan.id == data.id,
                 WorkoutPlan.user_id == user_data.id,
             ],
+            commit=False
         )
 
-        await self.repos.exercise_plan.update_many(data.workout_exercise_plans)
+        await self.repos.exercise_plan.update_many(data.exercise_plans)
 
-        for exercise_plan in data.workout_exercise_plans:
+        for exercise_plan in data.exercise_plans:
             await self.repos.exercise_set_plan.update_many(
-                data=exercise_plan.workout_exercise_set_plans,
+                data=exercise_plan.exercise_set_plans,
+                commit=False
             )
+
+        await self.repos.session.commit()
 
         fully_loaded_workout_plan = await self.repos.workout_plan.get_one(
             val=data.id,
             where_clause=[WorkoutPlan.id == data.id],
-            relations=[
-                selectinload(WorkoutPlan.workout_exercise_plans).selectinload(
-                    WorkoutExercisePlan.workout_exercise_set_plans
+            options=[
+                selectinload(WorkoutPlan.exercise_plans).selectinload(
+                    ExercisePlan.exercise_set_plans
                 )
             ],
         )
@@ -119,28 +123,33 @@ class WorkoutPlanService:
         )
 
         created_workout_data = await self.repos.workout_plan.create(
-            data=workout_data_create
+            data=workout_data_create,
+            commit=False
         )
 
         created_exercises = await self.repos.exercise_plan.create_many_exercise_plans(
             workout_id=created_workout_data.id,
-            payload=create_data.workout_exercise_plans,
+            payload=create_data.exercise_plans,
+            commit=False
         )
 
-        for index, exercise_set_plan in enumerate(created_exercises):
-            data = create_data.workout_exercise_plans[index]
+        for index, exercise_plan in enumerate(created_exercises):
+            data = create_data.exercise_plans[index]
 
             await self.repos.exercise_set_plan.create_many_exercise_set_plans(
-                exercise_plan_id=exercise_set_plan.id,
-                payload=data.workout_exercise_set_plans,
+                exercise_plan_id=exercise_plan.id,
+                payload=data.exercise_set_plans,
+                commit=False
             )
+
+        await self.repos.session.commit()
 
         fully_loaded_workout_plan = await self.repos.workout_plan.get_one(
             val=created_workout_data.id,
             where_clause=[WorkoutPlan.id == created_workout_data.id],
-            relations=[
-                selectinload(WorkoutPlan.workout_exercise_plans).selectinload(
-                    WorkoutExercisePlan.workout_exercise_set_plans
+            options=[
+                selectinload(WorkoutPlan.exercise_plans).selectinload(
+                    ExercisePlan.exercise_set_plans
                 )
             ],
         )

@@ -1,18 +1,18 @@
 from typing import Any
-from app.models import WorkoutExerciseSetPlan
+from app.models import ExerciseSetPlan
 from app.seed.base_seed import BaseSeed
 from app.seed.constants import workout_exercise_set_plans_data
 
 
 class WorkoutExerciseSetPlanSeed(BaseSeed):
-    __model__ = WorkoutExerciseSetPlan
+    __model__ = ExerciseSetPlan
 
     def create_workout_exercise_set_plan(
         self, data: dict[str, Any]
-    ) -> WorkoutExerciseSetPlan:
+    ) -> ExerciseSetPlan:
         return self.create_one(data)
 
-    def create_many(self) -> list[WorkoutExerciseSetPlan]:
+    def create_many(self) -> list[ExerciseSetPlan]:
         records = []
         for item in workout_exercise_set_plans_data:
             created_record = self.create_workout_exercise_set_plan(item)

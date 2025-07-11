@@ -1,7 +1,7 @@
 from sqlalchemy import asc, update
 from app.api.v1.schema.workout_plan import ExercisePlanBase
 from app.api.v1.workouts.schema import ExercisePlanReadPagination
-from app.models import User, WorkoutExercisePlan, WorkoutPlan
+from app.models import ExercisePlan, User, WorkoutPlan
 from app.repositories import Repos
 
 
@@ -16,12 +16,12 @@ class ExercisePlanService:
         pagination: ExercisePlanReadPagination,
     ):
         base_where_clause = [
-            WorkoutExercisePlan.workout_plan_id == WorkoutPlan.id,
+            ExercisePlan.workout_plan_id == WorkoutPlan.id,
             WorkoutPlan.user_id == User.id,
             User.id == user_id,
             WorkoutPlan.id == workout_plan_id,
         ]
-        base_order_clause = [asc(WorkoutExercisePlan.order_in_plan)]
+        base_order_clause = [asc(ExercisePlan.order_in_plan)]
         
         if pagination.skip:
             return await self.repos.exercise_plan.get_all(where_clause=base_where_clause,
@@ -59,35 +59,35 @@ class ExercisePlanService:
             # Moving item up (e.g., from order 5 to order 2)
             # Increment order_in_plan for items that were between new_order and old_order-1
             await session.execute(
-                update(WorkoutExercisePlan)
+                update(ExercisePlan)
                 .where(
-                    WorkoutExercisePlan.workout_plan_id == workout_plan_id,
-                    WorkoutExercisePlan.order_in_plan >= new_order,
-                    WorkoutExercisePlan.order_in_plan < old_order,
-                    WorkoutExercisePlan.id
+                    ExercisePlan.workout_plan_id == workout_plan_id,
+                    ExercisePlan.order_in_plan >= new_order,
+                    ExercisePlan.order_in_plan < old_order,
+                    ExercisePlan.id
                     != exercise_plan_id,  # Exclude the target item itself
                 )
-                .values(order_in_plan=WorkoutExercisePlan.order_in_plan + 1)
+                .values(order_in_plan=ExercisePlan.order_in_plan + 1)
             )
         elif new_order > old_order:  # new_order > old_order
             # Moving item down (e.g., from order 2 to order 5)
             # Decrement order_in_plan for items that were between old_order+1 and new_order
             await session.execute(
-                update(WorkoutExercisePlan)
+                update(ExercisePlan)
                 .where(
-                    WorkoutExercisePlan.workout_plan_id == workout_plan_id,
-                    WorkoutExercisePlan.order_in_plan > old_order,
-                    WorkoutExercisePlan.order_in_plan <= new_order,
-                    WorkoutExercisePlan.id
+                    ExercisePlan.workout_plan_id == workout_plan_id,
+                    ExercisePlan.order_in_plan > old_order,
+                    ExercisePlan.order_in_plan <= new_order,
+                    ExercisePlan.id
                     != exercise_plan_id,  # Exclude the target item itself
                 )
-                .values(order_in_plan=WorkoutExercisePlan.order_in_plan - 1)
+                .values(order_in_plan=ExercisePlan.order_in_plan - 1)
             )
         return await self.repos.exercise_plan.update_one(
             data=payload,
             where_clause=[
-                WorkoutExercisePlan.id == exercise_plan_id,
-                WorkoutExercisePlan.workout_plan_id == workout_plan_id,
+                ExercisePlan.id == exercise_plan_id,
+                ExercisePlan.workout_plan_id == workout_plan_id,
             ],
         )
 
@@ -111,12 +111,12 @@ class ExercisePlanService:
         # Shift existing exercises to make room for the new one
         session = self.repos.session
         await session.execute(
-            update(WorkoutExercisePlan)
+            update(ExercisePlan)
             .where(
-                WorkoutExercisePlan.workout_plan_id == workout_plan_id,
-                WorkoutExercisePlan.order_in_plan >= order_in_plan,
+                ExercisePlan.workout_plan_id == workout_plan_id,
+                ExercisePlan.order_in_plan >= order_in_plan,
             )
-            .values(order_in_plan=WorkoutExercisePlan.order_in_plan + 1)
+            .values(order_in_plan=ExercisePlan.order_in_plan + 1)
         )
         return await self.repos.exercise_plan.create(data=payload)
 
@@ -133,12 +133,12 @@ class ExercisePlanService:
         # Shift remaining items down (decrement order_in_plan by 1)
         # This fills the gap left by the deleted exercise.
         await session.execute(
-            update(WorkoutExercisePlan)
+            update(ExercisePlan)
             .where(
-                WorkoutExercisePlan.workout_plan_id == workout_plan_id,
-                WorkoutExercisePlan.order_in_plan > old_order,
+                ExercisePlan.workout_plan_id == workout_plan_id,
+                ExercisePlan.order_in_plan > old_order,
             )
-            .values(order_in_plan=WorkoutExercisePlan.order_in_plan - 1)
+            .values(order_in_plan=ExercisePlan.order_in_plan - 1)
         )
 
         return deleted_exercise
