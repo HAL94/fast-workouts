@@ -1,5 +1,4 @@
 from sqlalchemy import asc, update
-from app.api.v1.schema import workout_plan
 from app.api.v1.schema.workout_plan import ExerciseSetPlanBase
 from app.api.v1.workouts.schema import ExerciseSetPlanReadPagination
 from app.models import User, WorkoutExercisePlan, WorkoutExerciseSetPlan, WorkoutPlan
@@ -35,7 +34,7 @@ class ExerciseSetPlanService:
         exercise_plan_id: int,
         exercise_set_plan_id: int,
     ) -> ExerciseSetPlanBase:
-        exercise_set_plan = (
+        return (
             await self.repos.exercise_set_plan.find_one_exercise_set_plan(
                 workout_plan_id=workout_plan_id,
                 user_id=user_id,
@@ -43,8 +42,6 @@ class ExerciseSetPlanService:
                 exercise_set_plan_id=exercise_set_plan_id,
             )
         )
-
-        return ExerciseSetPlanBase(**exercise_set_plan.dict())
 
     async def get_many_set_plans(
         self,

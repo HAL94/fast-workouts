@@ -27,11 +27,9 @@ class WorkoutScheduleService:
         workout_plan_id: int,
         pagination: WorkoutPlanScheduleReadPagination,
     ):
-        page = pagination.page
-        size = pagination.size
         return await self.repos.workout_schedule.get_many(
-            page=page,
-            size=size,
+            page=pagination.page,
+            size=pagination.size,
             where_clause=[
                 *pagination.filter_fields,
                 WorkoutPlanSchedule.workout_plan_id == workout_plan_id,

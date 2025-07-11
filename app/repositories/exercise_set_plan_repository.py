@@ -1,8 +1,6 @@
-from sqlalchemy import select
 from app.api.v1.workouts.schema import ExerciseSetPlanBase
 from app.core.database.base_repo import BaseRepo
-from app.core.exceptions import NotFoundException
-from app.models import WorkoutExercisePlan, WorkoutExerciseSetPlan, WorkoutPlan
+from app.models import User, WorkoutExercisePlan, WorkoutExerciseSetPlan, WorkoutPlan
 
 
 class ExerciseSetPlanRepository(BaseRepo[WorkoutExerciseSetPlan, ExerciseSetPlanBase]):
@@ -16,28 +14,15 @@ class ExerciseSetPlanRepository(BaseRepo[WorkoutExerciseSetPlan, ExerciseSetPlan
         exercise_plan_id: int,
         exercise_set_plan_id: int,
     ) -> WorkoutExerciseSetPlan:
-        session = self.session
-
-        exercise_set_plan = await session.scalar(
-            select(WorkoutExerciseSetPlan)
-            .join(
-                WorkoutExercisePlan,
-                WorkoutExercisePlan.id
-                == WorkoutExerciseSetPlan.workout_exercise_plan_id,
-            )
-            .join(WorkoutPlan, WorkoutPlan.id == WorkoutExercisePlan.workout_plan_id)
-            .where(
-                WorkoutExerciseSetPlan.id == exercise_set_plan_id,
-                WorkoutPlan.id == workout_plan_id,
-                WorkoutExercisePlan.id == exercise_plan_id,
-                WorkoutPlan.user_id == user_id,
-            )
-        )
-
-        if not exercise_set_plan:
-            raise NotFoundException
-
-        return exercise_set_plan
+        return await self.get_one(val=exercise_set_plan_id, where_clause=[
+            WorkoutExerciseSetPlan.workout_exercise_plan_id == WorkoutExercisePlan.id,
+            WorkoutPlan.id == WorkoutExercisePlan.workout_plan_id,
+            WorkoutPlan.user_id == User.id,
+            WorkoutExerciseSetPlan.id == exercise_set_plan_id,
+            WorkoutExercisePlan.id == exercise_plan_id,
+            WorkoutPlan.id == workout_plan_id,
+            WorkoutPlan.user_id == user_id
+        ])
 
     async def create_set_plan(
         self,
@@ -82,14 +67,12 @@ class ExerciseSetPlanRepository(BaseRepo[WorkoutExerciseSetPlan, ExerciseSetPlan
         exercise_plan_id: int,
         exercise_set_plan_id: int,
     ):
-        result = await self.find_one_exercise_set_plan(
-            user_id=user_id,
-            workout_plan_id=workout_plan_id,
-            exercise_plan_id=exercise_plan_id,
-            exercise_set_plan_id=exercise_set_plan_id,
-        )
-
-        await self.session.delete(result)
-        await self.session.commit()
-
-        return ExerciseSetPlanBase(**result.dict())
+        return await self.delete_one(val=exercise_set_plan_id, where_clause=[
+            WorkoutExerciseSetPlan.workout_exercise_plan_id == WorkoutExercisePlan.id,
+            WorkoutPlan.id == WorkoutExercisePlan.workout_plan_id,
+            WorkoutPlan.user_id == User.id,
+            WorkoutExerciseSetPlan.id == exercise_set_plan_id,
+            WorkoutExercisePlan.id == exercise_plan_id,
+            WorkoutPlan.id == workout_plan_id,
+            WorkoutPlan.user_id == user_id
+        ])

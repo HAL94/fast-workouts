@@ -14,7 +14,6 @@ class ExercisePlanRepository(BaseRepo[WorkoutExercisePlan, ExercisePlanBase]):
         workout_plan_id: int,
         exercise_plan_id: int,
     ) -> ExercisePlanBase | WorkoutExercisePlan | None:
-
         exercise_plan = await self.get_one(
             val=exercise_plan_id,
             options=[selectinload(
