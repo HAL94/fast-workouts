@@ -6,7 +6,7 @@ from app.models import ExercisePlan, User, ExerciseSetPlan, WorkoutPlan
 class ExerciseSetPlanRepository(BaseRepo[ExerciseSetPlan, ExerciseSetPlanBase]):
     __dbmodel__ = ExerciseSetPlan
     __model__ = ExerciseSetPlanBase
-    
+
     async def find_one_exercise_set_plan(
         self,
         user_id: int,
@@ -15,10 +15,10 @@ class ExerciseSetPlanRepository(BaseRepo[ExerciseSetPlan, ExerciseSetPlanBase]):
         exercise_set_plan_id: int,
     ) -> ExerciseSetPlan:
         return await self.get_one(val=exercise_set_plan_id, where_clause=[
-            ExerciseSetPlan == ExercisePlan.id,
+            ExerciseSetPlan.exercise_plan_id == ExercisePlan.id,
             WorkoutPlan.id == ExercisePlan.workout_plan_id,
             WorkoutPlan.user_id == User.id,
-            ExerciseSetPlan == exercise_set_plan_id,
+            ExerciseSetPlan.id == exercise_set_plan_id,
             ExercisePlan.id == exercise_plan_id,
             WorkoutPlan.id == workout_plan_id,
             WorkoutPlan.user_id == user_id
@@ -66,13 +66,14 @@ class ExerciseSetPlanRepository(BaseRepo[ExerciseSetPlan, ExerciseSetPlanBase]):
         user_id: int,
         exercise_plan_id: int,
         exercise_set_plan_id: int,
+        commit: bool = True
     ):
         return await self.delete_one(val=exercise_set_plan_id, where_clause=[
-            ExerciseSetPlan == ExercisePlan.id,
+            ExerciseSetPlan.exercise_plan_id == ExercisePlan.id,
             WorkoutPlan.id == ExercisePlan.workout_plan_id,
             WorkoutPlan.user_id == User.id,
-            ExerciseSetPlan == exercise_set_plan_id,
+            ExerciseSetPlan.id == exercise_set_plan_id,
             ExercisePlan.id == exercise_plan_id,
             WorkoutPlan.id == workout_plan_id,
             WorkoutPlan.user_id == user_id
-        ])
+        ], commit=commit)

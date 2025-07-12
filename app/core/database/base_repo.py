@@ -455,6 +455,7 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
         field: InstrumentedAttribute | None = None,
         where_clause: list[ColumnElement[bool]] = None,
         return_model: Optional[BaseModel | PydanticModel] = None,
+        commit: bool = True
     ) -> PydanticModel:
         """
         Deletes a single record from the database matching the given criteria.
@@ -489,7 +490,8 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
             delete(self._dbmodel).filter(*where_cond).returning(self._dbmodel)
         )
 
-        await session.commit()
+        if commit:
+            await session.commit()
 
         if not deleted_db_model:
             raise NotFoundException

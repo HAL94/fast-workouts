@@ -51,7 +51,7 @@ class WorkoutPlanService:
             workout_plans.append(item_result)
 
         if pagination.skip:
-            return workout_ls
+            return workout_plans
         else:
             workout_pagination.result = workout_plans
             return workout_pagination
@@ -62,7 +62,7 @@ class WorkoutPlanService:
         return await self.repos.workout_plan.get_one(
             val=workout_plan_id,
             where_clause=[WorkoutPlan.user_id == user_data.id],
-            relations=[
+            options=[
                 selectinload(WorkoutPlan.exercise_plans).selectinload(
                     ExercisePlan.exercise_set_plans
                 )

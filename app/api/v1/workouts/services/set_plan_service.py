@@ -88,6 +88,7 @@ class ExerciseSetPlanService:
             exercise_plan_id=exercise_plan_id,
             exercise_set_plan_id=exercise_set_plan_id,
             user_id=user_id,
+            commit=False
         )
 
         session = self.repos.session
@@ -96,7 +97,7 @@ class ExerciseSetPlanService:
         await session.execute(
             update(ExerciseSetPlan)
             .where(
-                ExerciseSetPlan.workout_exercise_plan_id == exercise_plan_id,
+                ExerciseSetPlan.exercise_plan_id == exercise_plan_id,
                 ExerciseSetPlan.set_number > old_set_number,
             )
             .values(set_number=ExerciseSetPlan.set_number - 1)

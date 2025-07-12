@@ -17,7 +17,7 @@ class ExercisePlanRepository(BaseRepo[ExercisePlan, ExercisePlanBase]):
         exercise_plan = await self.get_one(
             val=exercise_plan_id,
             options=[selectinload(
-                ExercisePlan.workout_exercise_set_plans)],
+                ExercisePlan.exercise_set_plans)],
             where_clause=[
                 ExercisePlan.id == exercise_plan_id,
                 WorkoutPlan.id == workout_plan_id,  # implicit join with WorkoutPlan
@@ -53,8 +53,10 @@ class ExercisePlanRepository(BaseRepo[ExercisePlan, ExercisePlanBase]):
         result = await self.delete_one(
             val=exercise_plan_id,
             field='id',
-            where_clause=[ExercisePlan.id == exercise_plan_id,
-                          ExercisePlan.workout_plan_id == workout_plan_id,
-                          WorkoutPlan.user_id == user_id]
+            where_clause=[
+                ExercisePlan.workout_plan_id == WorkoutPlan.id,
+                ExercisePlan.id == exercise_plan_id,
+                WorkoutPlan.id == workout_plan_id,
+                WorkoutPlan.user_id == user_id]
         )
         return result
