@@ -23,6 +23,8 @@ WorkoutPlanPagination = PaginationFactory.create_pagination(
     WorkoutPlan,
     sortable_fields=workout_plan_cols, filterable_fields=workout_plan_cols
 )
+
+
 class WorkoutPlanReadPagination(WorkoutPlanPagination):
     pass
 
@@ -51,6 +53,8 @@ workout_schedule_cols = WorkoutPlanSchedule.columns()
 WorkoutPlanSchedulePagination = PaginationFactory.create_pagination(WorkoutPlanSchedule,
                                                                     sortable_fields=workout_schedule_cols, filterable_fields=workout_schedule_cols
                                                                     )
+
+
 class WorkoutPlanScheduleReadPagination(WorkoutPlanSchedulePagination):
     pass
 
@@ -83,7 +87,7 @@ class CreateWorkoutScheduleRequest(ScheduleBase):
     @model_validator(mode="after")
     def validate_start_time_and_reminder(self,) -> Self:
         start_at: Optional[datetime] = self.start_at
-        end_time: Optional[datetime] = self.end_time
+        end_at: Optional[datetime] = self.end_at
 
         remind_before_minutes: Optional[float] = self.remind_before_minutes
 
@@ -103,13 +107,13 @@ class CreateWorkoutScheduleRequest(ScheduleBase):
         start_at_utc = pytz.UTC.localize(
             start_at) if not start_at.tzinfo else start_at
 
-        if end_time:
-            end_time_utc = pytz.UTC.localize(
-                end_time) if not end_time.tzinfo else end_time
+        if end_at:
+            end_at_utc = pytz.UTC.localize(
+                end_at) if not end_at.tzinfo else end_at
 
-            if end_time_utc < start_at_utc:
+            if end_at_utc < start_at_utc:
                 raise ValueError(
-                    f"Passed value for end_time {end_time_utc} is before start_at: {start_at_utc}")
+                    f"Passed value for end_time {end_at_utc} is before start_at: {start_at_utc}")
 
         if remind_before_minutes is not None:
             """
@@ -184,4 +188,4 @@ class ScheduleSuggestionsResponse(AppBaseModel):
 
 
 class ScheduleCreateResponse(ScheduleBase):
-    reminder_send_time: datetime
+    pass

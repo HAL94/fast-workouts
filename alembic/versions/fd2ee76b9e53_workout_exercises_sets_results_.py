@@ -1,8 +1,8 @@
-"""workout_exercises_sets_results_refactor
+"""workout_exercises_sets_results_schedules_refactor
 
-Revision ID: 92382daa25fe
+Revision ID: fd2ee76b9e53
 Revises: 07185670e2c8
-Create Date: 2025-07-11 21:15:12.666520
+Create Date: 2025-07-12 12:07:42.754894
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '92382daa25fe'
+revision: str = 'fd2ee76b9e53'
 down_revision: Union[str, None] = '07185670e2c8'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -48,8 +48,10 @@ def upgrade() -> None:
     )
     op.create_table('workout_plan_schedules',
     sa.Column('start_at', sa.DateTime(timezone=True), nullable=False),
-    sa.Column('end_time', sa.DateTime(), nullable=True),
+    sa.Column('end_at', sa.DateTime(), nullable=True),
     sa.Column('remind_before_minutes', sa.Integer(), nullable=True),
+    sa.Column('reminder_sent', sa.Boolean(), nullable=False),
+    sa.Column('reminder_send_time', sa.DateTime(), nullable=True),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('workout_plan_id', sa.Integer(), nullable=False),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
@@ -59,7 +61,7 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['workout_plan_id'], ['workout_plans.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index(op.f('ix_workout_plan_schedules_end_time'), 'workout_plan_schedules', ['end_time'], unique=False)
+    op.create_index(op.f('ix_workout_plan_schedules_end_at'), 'workout_plan_schedules', ['end_at'], unique=False)
     op.create_index(op.f('ix_workout_plan_schedules_start_at'), 'workout_plan_schedules', ['start_at'], unique=False)
     op.create_table('exercise_set_plans',
     sa.Column('set_number', sa.Integer(), nullable=False),
@@ -131,7 +133,7 @@ def downgrade() -> None:
     op.drop_table('workout_sessions')
     op.drop_table('exercise_set_plans')
     op.drop_index(op.f('ix_workout_plan_schedules_start_at'), table_name='workout_plan_schedules')
-    op.drop_index(op.f('ix_workout_plan_schedules_end_time'), table_name='workout_plan_schedules')
+    op.drop_index(op.f('ix_workout_plan_schedules_end_at'), table_name='workout_plan_schedules')
     op.drop_table('workout_plan_schedules')
     op.drop_table('exercise_plans')
     op.drop_table('workout_plans')

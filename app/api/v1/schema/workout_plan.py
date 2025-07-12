@@ -1,7 +1,8 @@
-from datetime import datetime
-from typing import Optional
+from datetime import datetime, timedelta
+from typing import Any, Optional, Union
 
-from pydantic import Field
+from pydantic import Field, ValidationInfo, field_serializer, field_validator
+from app.api.v1.workouts.utils.date_formatter import format_to_local_time
 from app.core.common.app_response import AppBaseModel
 
 
@@ -43,5 +44,25 @@ class ScheduleBase(AppBaseModel):
     workout_plan_id: int
     user_id: int
     start_at: datetime
-    end_time: Optional[datetime] = None
+    end_at: Optional[datetime] = None
     remind_before_minutes: Optional[float] = None
+    reminder_sent: Optional[bool] = None
+    reminder_send_time: Optional[datetime] = None
+
+    @field_validator("reminder_send_time", mode="after")
+    @classmethod
+    def init_reminder_send_time(cls, v: Any, info: ValidationInfo):
+        start_at: datetime = info.data.get("start_at")
+        remind_before_minutes = info.data.get("remind_before_minutes")
+
+        if start_at and remind_before_minutes:
+            reminder_time = start_at - \
+                timedelta(minutes=remind_before_minutes)
+            return reminder_time
+        return v
+
+    @field_serializer("reminder_send_time")
+    def serialize_reminder_send_time(self, reminder_send_time: Optional[datetime]) -> Union[None, str]:
+        if not reminder_send_time:
+            return None
+        return format_to_local_time(reminder_send_time)

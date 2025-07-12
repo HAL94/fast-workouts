@@ -10,7 +10,6 @@ from app.api.v1.workouts.schema import (
     WorkoutPlanScheduleReadPagination,
 )
 from app.api.v1.workouts.services import WorkoutScheduleService
-from app.api.v1.workouts.utils.date_formatter import format_to_local_time
 from app.api.v1.workouts.utils.schedule_time_validator import TimeReminderSuggestion
 from app.core.auth.jwt import validate_jwt
 from app.core.auth.schema import UserRead
@@ -80,10 +79,8 @@ async def create_workout_plan_schedule(
         workout_plan_id=workout_plan_id,
         payload=payload,
     )
-    reminder_time = payload.start_at - \
-        timedelta(minutes=payload.remind_before_minutes)
     result = ScheduleCreateResponse(
-        **result.model_dump(), reminder_send_time=format_to_local_time(reminder_time))
+        **result.model_dump())
 
     if payload.remind_before_minutes:
         start_at_utc = pytz.UTC.localize(
