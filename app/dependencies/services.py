@@ -2,6 +2,7 @@ from fastapi import Depends
 from app.api.v1.categories.service import CategoryService
 from app.api.v1.exercises.service import ExerciseService
 from app.api.v1.muscle_groups.service import MuscleGroupService
+from app.api.v1.sessions.services.workout_session_service import WorkoutSessionService
 from app.api.v1.workouts.services import (
     ExercisePlanService,
     ExerciseSetPlanService,
@@ -46,3 +47,6 @@ def get_muscle_group_service(all_repos: Repos = Depends(get_all_repos)):
 
 def get_category_service(all_repos: Repos = Depends(get_all_repos)):
     return CategoryService(repos=all_repos)
+
+def get_session_service(all_repos: Repos = Depends(get_all_repos)):
+    return WorkoutSessionService(repos=all_repos)

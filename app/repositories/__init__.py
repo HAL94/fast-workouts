@@ -8,6 +8,7 @@ from .exercise_set_plan_repository import ExerciseSetPlanRepository
 from .workout_schedule_repository import WorkoutScheduleRepository
 from .muscle_group_repository import MuscleGroupRepository
 from .category_repository import CategoryRepository
+from .workout_session_repository import WorkoutSessionRepository
 
 all_repos = [
     WorkoutPlanRepository,
@@ -16,7 +17,8 @@ all_repos = [
     WorkoutScheduleRepository,
     ExerciseRepository,
     MuscleGroupRepository,
-    CategoryRepository
+    CategoryRepository,
+    WorkoutSessionRepository
 ]
 __all__ = all_repos
 
@@ -52,3 +54,7 @@ class Repos:
     @cached_property
     def category(self) -> CategoryRepository:
         return CategoryRepository(session=self.session)
+    
+    @cached_property
+    def workout_session(self) -> WorkoutSessionRepository:
+        return WorkoutSessionRepository(session=self.session)
