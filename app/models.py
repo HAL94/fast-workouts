@@ -1,7 +1,8 @@
 from datetime import datetime
 import enum
-from sqlalchemy import DateTime, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import DateTime, ForeignKey, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.core.database.base_model import Base
 
 
@@ -217,7 +218,7 @@ class WorkoutSession(Base):
     __tablename__ = "workout_sessions"
 
     title: Mapped[str] = mapped_column(String(100), nullable=True)
-    started_at: Mapped[datetime] = mapped_column(nullable=True)
+    started_at: Mapped[datetime] = mapped_column(nullable=True, default=func.now())
     ended_at: Mapped[datetime] = mapped_column(nullable=True)
     duration_minutes: Mapped[int] = mapped_column(nullable=True)
     status: Mapped[str] = mapped_column(String(50), nullable=True)
