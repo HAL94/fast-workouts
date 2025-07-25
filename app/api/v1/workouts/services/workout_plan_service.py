@@ -9,10 +9,7 @@ from app.api.v1.workouts.schema import (
     WorkoutPlanReadPagination,
 )
 from app.core.auth.schema import UserRead
-from app.models import (
-    ExercisePlan,
-    WorkoutPlan,
-)
+from app.models import ExercisePlan, WorkoutPlan
 
 
 class WorkoutPlanService:
@@ -23,13 +20,17 @@ class WorkoutPlanService:
         self, user_data: UserRead, pagination: WorkoutPlanReadPagination
     ) -> PaginatedResponse[WorkoutPlanReadPaginatedItem] | list[WorkoutPlanBase]:
         if pagination.skip:
-            workout_ls = await self.repos.workout_plan.get_all(where_clause=[WorkoutPlan.user_id == user_data.id])
+            workout_ls = await self.repos.workout_plan.get_all(
+                where_clause=[WorkoutPlan.user_id == user_data.id]
+            )
         else:
             workout_pagination = await self.repos.workout_plan.get_many(
                 page=pagination.page,
                 size=pagination.size,
-                where_clause=[*pagination.filter_fields,
-                              WorkoutPlan.user_id == user_data.id],
+                where_clause=[
+                    *pagination.filter_fields,
+                    WorkoutPlan.user_id == user_data.id,
+                ],
                 order_clause=pagination.sort_fields,
             )
             workout_ls = workout_pagination.result
@@ -87,15 +88,14 @@ class WorkoutPlanService:
                 WorkoutPlan.id == data.id,
                 WorkoutPlan.user_id == user_data.id,
             ],
-            commit=False
+            commit=False,
         )
 
-        await self.repos.exercise_plan.update_many(data.exercise_plans)
+        await self.repos.exercise_plan.update_many(data.exercise_plans, commit=False)
 
         for exercise_plan in data.exercise_plans:
             await self.repos.exercise_set_plan.update_many(
-                data=exercise_plan.exercise_set_plans,
-                commit=False
+                data=exercise_plan.exercise_set_plans, commit=False
             )
 
         await self.repos.session.commit()
@@ -115,38 +115,26 @@ class WorkoutPlanService:
     async def add_workout_plan(
         self, user_data: UserRead, create_data: CreateWorkoutPlanRequest
     ) -> WorkoutPlanBase:
+        # Adding with session object graph
         workout_data_create = WorkoutPlanBase(
             title=create_data.title,
             description=create_data.description,
             user_id=user_data.id,
             comments=create_data.comments,
+            exercise_plans=create_data.exercise_plans,
         )
 
-        created_workout_data = await self.repos.workout_plan.create(
-            data=workout_data_create,
-            commit=False
-        )
+        parsed_workout_data = WorkoutPlanBase.to_entity(workout_data_create)
 
-        created_exercises = await self.repos.exercise_plan.create_many_exercise_plans(
-            workout_id=created_workout_data.id,
-            payload=create_data.exercise_plans,
-            commit=False
-        )
-
-        for index, exercise_plan in enumerate(created_exercises):
-            data = create_data.exercise_plans[index]
-
-            await self.repos.exercise_set_plan.create_many_exercise_set_plans(
-                exercise_plan_id=exercise_plan.id,
-                payload=data.exercise_set_plans,
-                commit=False
-            )
-
-        await self.repos.session.commit()
+        try:
+            self.repos.session.add(parsed_workout_data)
+            await self.repos.session.commit()
+        except Exception as _e:
+            print("Failed to parse to model", _e)
 
         fully_loaded_workout_plan = await self.repos.workout_plan.get_one(
-            val=created_workout_data.id,
-            where_clause=[WorkoutPlan.id == created_workout_data.id],
+            val=parsed_workout_data.id,
+            where_clause=[WorkoutPlan.id == parsed_workout_data.id],
             options=[
                 selectinload(WorkoutPlan.exercise_plans).selectinload(
                     ExercisePlan.exercise_set_plans

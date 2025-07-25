@@ -145,7 +145,7 @@ class CreateWorkoutPlanRequest(AppBaseModel):
 
 # --- Update Workout Schema ---
 # Represents updation of workout plan, exercise plans and exercise sets plans
-class ExerciseSetPlanUpdate(AppBaseModel):
+class ExerciseSetPlanUpdate(ExerciseSetPlanBase):
     id: int
     set_number: Optional[int] = None
     target_reps: Optional[int] = None
@@ -153,7 +153,7 @@ class ExerciseSetPlanUpdate(AppBaseModel):
     target_duration_minutes: Optional[float] = None
 
 
-class ExercisePlanUpdate(AppBaseModel):
+class ExercisePlanUpdate(ExercisePlanBase):
     id: int
     exercise_id: Optional[int]
     order_in_plan: Optional[int]
@@ -163,7 +163,7 @@ class ExercisePlanUpdate(AppBaseModel):
     notes: Optional[str] = None
 
 
-class UpdateWorkoutPlanRequest(AppBaseModel):
+class UpdateWorkoutPlanRequest(WorkoutPlanBase):
     id: int
     title: Optional[str]
     description: Optional[str] = None

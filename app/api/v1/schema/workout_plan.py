@@ -4,6 +4,7 @@ from typing import Any, Optional, Union
 from pydantic import Field, ValidationInfo, field_serializer, field_validator
 from app.api.v1.workouts.utils.date_formatter import format_to_local_time
 from app.core.common.app_response import AppBaseModel
+from app.models import WorkoutPlan, ExercisePlan, ExerciseSetPlan
 
 
 class WorkoutPlanBase(AppBaseModel):
@@ -13,6 +14,9 @@ class WorkoutPlanBase(AppBaseModel):
     comments: Optional[str] = None
     user_id: Optional[int] = None
     exercise_plans: Optional[list["ExercisePlanBase"]] = None
+
+    class Meta:
+        orm_model = WorkoutPlan
 
 
 class ExercisePlanBase(AppBaseModel):
@@ -26,6 +30,9 @@ class ExercisePlanBase(AppBaseModel):
     created_at: Optional[str | datetime] = None
     updated_at: Optional[str | datetime] = None
     exercise_set_plans: Optional[list["ExerciseSetPlanBase"]] = None
+    
+    class Meta:
+        orm_model = ExercisePlan
 
 
 class ExerciseSetPlanBase(AppBaseModel):
@@ -37,6 +44,9 @@ class ExerciseSetPlanBase(AppBaseModel):
     exercise_plan_id: Optional[int] = None
     created_at: Optional[str | datetime] = None
     updated_at: Optional[str | datetime] = None
+    
+    class Meta:
+        orm_model = ExerciseSetPlan
 
 
 class ScheduleBase(AppBaseModel):
