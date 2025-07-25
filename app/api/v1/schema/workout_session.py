@@ -2,8 +2,6 @@ from datetime import datetime
 from typing import Optional
 from app.api.v1.schema.workout_plan import (
     ExercisePlanBase,
-    WorkoutPlanBase,
-    ExerciseSetPlanBase,
 )
 from app.core.common.app_response import AppBaseModel
 from pydantic import Field
@@ -20,7 +18,6 @@ class WorkoutSessionBase(AppBaseModel):
     user_id: int
     workout_plan_id: int
 
-    workout_plan: Optional[WorkoutPlanBase] = None
     workout_session_results: Optional[list["ExerciseResultBase"]] = None
 
 
@@ -29,6 +26,7 @@ class ExerciseResultBase(AppBaseModel):
     sets_achieved: int
     duration_minutes_achieved: Optional[float]
     workout_session_id: int
+    exercise_id: int
 
     exercise_plan: Optional[ExercisePlanBase] = None
     exercise_set_results: Optional[list["ExerciseSetResultBase"]] = None
@@ -41,6 +39,6 @@ class ExerciseSetResultBase(AppBaseModel):
     weight_achieved: float
     duration_seconds: Optional[int] = None
     rpe: Optional[int] = None
+    exercise_set_plan_id: int
 
-    exercise_result_id: int
-    exercise_set_plan: Optional[ExerciseSetPlanBase] = None
+    exercise_result_id: Optional[int] = None

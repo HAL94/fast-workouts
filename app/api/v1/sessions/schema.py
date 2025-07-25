@@ -30,6 +30,7 @@ class ExerciseResultCreate(AppBaseModel):
     sets_achieved: int
     exercise_set_results: list["SetResultCreate"]
     exercise_plan_id: int
+    exercise_id: int
 
     duration_minutes_achieved: Optional[float]
 

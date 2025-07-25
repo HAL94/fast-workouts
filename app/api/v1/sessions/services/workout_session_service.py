@@ -2,7 +2,11 @@ from app.api.v1.sessions.schema import (
     WorkoutSessionReadPagination,
     WorkoutSessionCreate,
 )
-from app.api.v1.schema.workout_session import WorkoutSessionBase, ExerciseSetResultBase
+from app.api.v1.schema.workout_session import (
+    WorkoutSessionBase,
+    ExerciseSetResultBase,
+    ExerciseResultBase,
+)
 from app.models import User, WorkoutSession, ExerciseResult
 from app.repositories import Repos
 from app.models import WorkoutSessionStatus
@@ -14,6 +18,7 @@ from app.api.v1.sessions.schema import (
     SetResultCreate,
 )
 from sqlalchemy.orm import selectinload
+
 
 class WorkoutSessionService:
     def __init__(self, repos: Repos):
@@ -72,31 +77,41 @@ class WorkoutSessionService:
     ):
         found_session = await self.repos.workout_session.get_one(
             val=session_id,
-            where_clause=[WorkoutSession.user_id == User.id],
+            where_clause=[WorkoutSession.user_id == user_id],
         )
 
         found_session.session_comments = (
             workout_results.session_comments or found_session.session_comments
         )
 
-        def exercise_results_mapper(exercise_result: ExerciseResultCreate):
-            exercise_result.workout_session_id = session_id
-            return exercise_result
+        def exercise_results_mapper(
+            exercise_result: ExerciseResultCreate,
+        ) -> ExerciseResultBase:
+            return ExerciseResultBase(
+                **exercise_result.model_dump(
+                    exclude_unset=True,
+                    by_alias=False,
+                    exclude={"exercise_set_results": True},
+                ),
+                workout_session_id=session_id,
+            )
 
         mapped_session_results = list(
             map(exercise_results_mapper, workout_results.workout_session_results)
         )
+
+        print("results", mapped_session_results)
 
         created_session_results = await self.repos.exercise_result.create_many(
             data=mapped_session_results, commit=False
         )
 
         def exercise_set_result_mapper(
-            exercise_set_result: SetResultCreate, exercise_result_id: int
+            exercise_set_result: SetResultCreate, exercise_result: ExerciseResultBase
         ):
             return ExerciseSetResultBase(
                 **exercise_set_result.model_dump(exclude_unset=True, by_alias=False),
-                exercise_result_id=exercise_result_id,
+                exercise_result_id=exercise_result.id,
             )
 
         for index, exercise_result in enumerate(created_session_results):
@@ -104,12 +119,14 @@ class WorkoutSessionService:
 
             exercise_set_results = list(
                 map(
-                    lambda item: exercise_set_result_mapper(item, exercise_result.id),
+                    lambda item: exercise_set_result_mapper(
+                        item, exercise_result=exercise_result
+                    ),
                     data.exercise_set_results,
                 )
             )
 
-            await self.repos.exercise_result.create_many(
+            await self.repos.exercise_set_result.create_many(
                 data=exercise_set_results, commit=False
             )
 
@@ -124,5 +141,5 @@ class WorkoutSessionService:
                 )
             ],
         )
-        
+
         return found_session
