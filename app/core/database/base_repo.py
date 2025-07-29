@@ -111,7 +111,6 @@ class BaseRepo(Generic[DbModel, PydanticModel]):
                 batch_values = [item.model_dump(
                     exclude_none=True, by_alias=False) for item in batch]
 
-                print("Batch", batch_values)
                 # Use bulk insert with RETURNING to get created records
                 created_records = await session.scalars(
                     insert(self._dbmodel).values(
