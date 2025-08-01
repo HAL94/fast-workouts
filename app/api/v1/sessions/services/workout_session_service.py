@@ -1,6 +1,7 @@
 from app.api.v1.sessions.schema import (
     WorkoutSessionReadPagination,
     WorkoutSessionCreate,
+    ExerciseResultPagination,
 )
 from app.api.v1.schema.workout_session import (
     WorkoutSessionBase,
@@ -27,7 +28,6 @@ from app.api.v1.sessions.schema import (
     SetResultCreate,
 )
 from sqlalchemy.orm import selectinload
-from sqlalchemy import select
 
 
 class WorkoutSessionService:
@@ -37,20 +37,23 @@ class WorkoutSessionService:
     async def get_many_sessions(
         self, user_id: int, pagination: WorkoutSessionReadPagination
     ):
+        base_options = [
+            selectinload(WorkoutSession.workout_session_results).selectinload(
+                ExerciseResult.exercise_set_results
+            )
+        ]
         if pagination.skip:
             return await self.repos.workout_session.get_all(
-                where_clause=[WorkoutSession.user_id == User.id, User.id == user_id]
+                where_clause=[WorkoutSession.user_id == user_id],
+                options=base_options,
             )
 
         return await self.repos.workout_session.get_many(
             page=pagination.page,
             size=pagination.size,
-            where_clause=[
-                *pagination.filter_fields,
-                WorkoutSession.user_id == User.id,
-                User.id == user_id,
-            ],
+            where_clause=[*pagination.filter_fields, WorkoutSession.user_id == user_id],
             order_clause=pagination.sort_fields,
+            options=base_options,
         )
 
     async def start_session_now(self, user_id: int, payload: WorkoutSessionCreate):
@@ -82,120 +85,6 @@ class WorkoutSessionService:
             ],
         )
 
-    async def validate_exercise_set_results(
-        self,
-        user_id: int,
-        session_id: int,
-        exercise_plan_id: int,
-        exercise_set_results: list[ExerciseSetResultBase],
-    ):
-        # we validate that this session and workout plan is for the corresponding user
-        workout_plan = await self.get_workout_plan_by_session(
-            user_id=user_id, session_id=session_id
-        )
-
-        target_exercise_set_plan_ids = [
-            result.exercise_set_plan_id for result in exercise_set_results
-        ]
-
-        # these sets belong to the user
-        exercise_set_plans = (
-            await self.repos.session.scalars(
-                select(ExerciseSetPlan).where(
-                    ExerciseSetPlan.exercise_plan_id == ExercisePlan.id,
-                    ExercisePlan.id == exercise_plan_id,
-                    ExerciseSetPlan.id.in_(target_exercise_set_plan_ids),
-                    ExercisePlan.workout_plan_id == workout_plan.id,
-                )
-            )
-        ).all()
-
-        print(f"Fetched exercise_set_plans: {exercise_set_plans}")
-        print(f"Attempting to add results for: {target_exercise_set_plan_ids}")
-
-        exercise_set_plans_set = {set_plan.id for set_plan in exercise_set_plans}
-        target_set_plans_set = set(target_exercise_set_plan_ids)
-
-        difference = target_set_plans_set - exercise_set_plans_set
-
-        if len(difference) != 0:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Some entries refer to set plans that do not exist: {difference}",
-            )
-
-        where_clause = []
-        for target_set_id in target_exercise_set_plan_ids:
-            where_clause.append(ExerciseSetResult.exercise_set_plan_id == target_set_id)
-
-        # check if there are already results for those plans
-        set_results_for_target_plans = await self.repos.session.scalars(
-            select(ExerciseSetResult).where(*where_clause)
-        )
-
-        set_plan_results = set_results_for_target_plans.all()
-
-        if len(set_plan_results) != 0:
-            raise HTTPException(
-                status_code=400,
-                detail=f"You have already entered results for these plans: {[plan.exercise_set_plan_id for plan in set_plan_results]}",
-            )
-
-    async def validate_exercise_plans_results(
-        self,
-        session_id: int,
-        user_id: int,
-        exercise_results: list[ExerciseResultBase],
-    ):
-        exercise_plan_ids = [result.exercise_plan_id for result in exercise_results]
-
-        # fetch the user's workout plan by current session
-        workout_plan = await self.get_workout_plan_by_session(
-            session_id=session_id, user_id=user_id
-        )
-
-        found_exercise_plans = await self.repos.session.scalars(
-            select(ExercisePlan).where(
-                ExercisePlan.id.in_(exercise_plan_ids),
-                ExercisePlan.workout_plan_id == workout_plan.id,
-            )
-        )
-
-        # we could skip this check with a simple equality check,
-        # but it's good to show why the op failed
-        exercise_plan_seq = found_exercise_plans.all()
-        exercise_plan_set = {plan.id for plan in exercise_plan_seq}
-        target_plans = set(exercise_plan_ids)
-
-        difference = target_plans - exercise_plan_set
-
-        # check if exercise plans exist for the user's workout plan
-        # do not allow entry for results that may refer to arbitrary plans (workout or exercise or sets)
-        # But the entry for results should refer to plans set by the user.
-        if len(difference) != 0:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Some entries refer to exercise plans that do not exist: {difference}",
-            )
-
-        # At this point we validated that the results refer to plans set for this user.
-        where_clause = []
-        for target_plan_id in exercise_plan_ids:
-            where_clause.append(ExerciseResult.exercise_plan_id == target_plan_id)
-
-        # check if there are already results for those plans
-        exercise_results_for_target_plans = await self.repos.session.scalars(
-            select(ExerciseResult).where(*where_clause)
-        )
-
-        exercise_plan_results = exercise_results_for_target_plans.all()
-
-        if len(exercise_plan_results) != 0:
-            raise HTTPException(
-                status_code=400,
-                detail=f"You have already entered results for these plans: {exercise_plan_ids}",
-            )
-
     async def get_workout_plan_by_session(self, session_id: int, user_id: int):
         found_session = await self.repos.workout_session.get_one(
             val=session_id,
@@ -216,19 +105,91 @@ class WorkoutSessionService:
     async def validate_session_results(
         self, user_id: int, session_id: int, workout_results: WorkoutSessionResultCreate
     ):
-        await self.validate_exercise_plans_results(
-            user_id=user_id,
-            session_id=session_id,
-            exercise_results=workout_results.workout_session_results,
+        workout_plan = await self.get_workout_plan_by_session(
+            session_id=session_id, user_id=user_id
         )
 
-        for result_set in workout_results.workout_session_results:
-            await self.validate_exercise_set_results(
-                user_id=user_id,
-                session_id=session_id,
-                exercise_plan_id=result_set.exercise_plan_id,
-                exercise_set_results=result_set.exercise_set_results,
+        planned_exercises_map: dict[int, ExercisePlan] = {
+            ex.id: ex for ex in workout_plan.exercise_plans
+        }
+        planned_sets_map: dict[int, dict[int, ExerciseSetPlan]] = {
+            ep.id: {sp.id: sp for sp in ep.exercise_set_plans}
+            for ep in workout_plan.exercise_plans
+        }
+
+        incoming_exercise_plan_ids = {
+            result.exercise_plan_id
+            for result in workout_results.workout_session_results
+        }
+
+        incoming_exercise_set_plan_ids = {
+            exercise_set_result.exercise_set_plan_id
+            for result in workout_results.workout_session_results
+            for exercise_set_result in result.exercise_set_results
+        }
+
+        # check ownership of plans
+        for incoming_ex_plan_id in incoming_exercise_plan_ids:
+            if incoming_ex_plan_id not in planned_exercises_map:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Exercise plan with ID: `{incoming_ex_plan_id}` not found or does not belong "
+                    f"to workout plan ID: `{workout_plan.id}` for user ID: `{user_id}`.",
+                )
+
+        for ex_result_data in workout_results.workout_session_results:
+            ex_plan_id = ex_result_data.exercise_plan_id
+            for set_result_data in ex_result_data.exercise_set_results:
+                incoming_set_plan_id = set_result_data.exercise_set_plan_id
+                if incoming_set_plan_id not in planned_sets_map[ex_plan_id]:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"Exercise set plan with ID: `{set_result_data.exercise_set_plan_id}` not found or does not belong to "
+                        f"exercise plan ID: `{ex_result_data.exercise_plan_id}` within workout plan ID: `{workout_plan.id}`.",
+                    )
+
+        existing_ex_results = await self.repos.exercise_result.get_all(
+            where_clause=[
+                ExerciseResult.exercise_plan_id.in_(list(incoming_exercise_plan_ids))
+            ]
+        )
+
+        # Consider skipping incoming records with these ids to effectively make this API from `create` to `create or update`
+        if len(existing_ex_results) != 0:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Exercise results exist for these plans: {[ex_result.exercise_plan_id for ex_result in existing_ex_results]} "
+                f"Use update API to modify.",
             )
+
+        existing_ex_set_results = await self.repos.exercise_set_result.get_all(
+            where_clause=[
+                ExerciseSetResult.exercise_set_plan_id.in_(
+                    incoming_exercise_set_plan_ids
+                )
+            ]
+        )
+
+        if len(existing_ex_set_results) != 0:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Exercise set results exist for these set plans: {[ex_set_result.exercise_set_plan_id for ex_set_result in existing_ex_set_results]} "
+                f"Use update API to modify.",
+            )
+
+        # await self.validate_exercise_plans_results(
+        #     user_id=user_id,
+        #     session_id=session_id,
+        #     exercise_results=workout_results.workout_session_results,
+        # )
+
+        # for result_set in workout_results.workout_session_results:
+        #     await self.validate_exercise_set_results(
+        #         user_id=user_id,
+        #         session_id=session_id,
+        #         exercise_plan_id=result_set.exercise_plan_id,
+        #         exercise_set_results=result_set.exercise_set_results,
+        #     )
 
     async def create_session_results(
         self, user_id: int, session_id: int, workout_results: WorkoutSessionResultCreate
@@ -301,3 +262,67 @@ class WorkoutSessionService:
         )
 
         return found_session
+
+    async def add_exercise_result(self, user_id: int, data: ExerciseResultBase):
+        # validate if session exists for this user
+        await self.repos.workout_session.get_one(
+            val=data.workout_session_id,
+            where_clause=[WorkoutSession.user_id == user_id],
+        )
+        return await self.repos.exercise_result.create(data=data)
+
+    async def update_exercise_result(self, user_id: int, data: ExerciseResultBase):
+        found_exercise = await self.repos.exercise_result.get_one(
+            val=data.id,
+            where_clause=[
+                ExerciseResult.workout_session_id == WorkoutSession.id,
+                ExerciseResult.workout_session_id == data.workout_session_id,
+                WorkoutSession.user_id == user_id,
+            ],
+        )
+        dumped = data.model_dump(
+            by_alias=False, exclude_unset=True, exclude={"exercise_set_results": True}
+        )
+        for key, value in dumped.items():
+            if hasattr(found_exercise, key):
+                if value != getattr(found_exercise, key):
+                    setattr(found_exercise, key, value)
+
+        return await self.repos.exercise_result.update_one(
+            found_exercise, where_clause=[ExerciseResult.id == found_exercise.id]
+        )
+
+    async def remove_exercise_result(self, user_id: int, exercise_result_id: int):
+        return await self.repos.exercise_result.delete_one(
+            val=exercise_result_id,
+            where_clause=[
+                ExerciseResult.workout_session_id == WorkoutSession.id,
+                WorkoutSession.user_id == user_id,
+            ],
+        )
+
+    async def get_one_exercise_result(self, user_id: int, exercise_result_id: int):
+        return await self.repos.exercise_result.get_one(
+            val=exercise_result_id,
+            where_clause=[
+                ExerciseResult.workout_session_id == WorkoutSession.id,
+                WorkoutSession.user_id == user_id,
+            ],
+        )
+
+    async def get_many_exercise_results(
+        self, user_id: int, session_id: int, pagination: ExerciseResultPagination
+    ):
+        base_where = [
+            ExerciseResult.workout_session_id == WorkoutSession.id,
+            WorkoutSession.id == session_id,
+            WorkoutSession.user_id == user_id,
+        ]
+        if pagination.skip:
+            return await self.repos.exercise_result.get_all(where_clause=[*base_where])
+        return await self.repos.exercise_result.get_many(
+            page=pagination.page,
+            size=pagination.size,
+            where_clause=[*base_where, *pagination.filter_fields],
+            order_clause=pagination.sort_fields,
+        )

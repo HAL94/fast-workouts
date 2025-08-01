@@ -10,6 +10,7 @@ from app.core.auth.schema import UserRead
 from app.core.common.app_response import AppResponse
 from app.dependencies.services import get_session_service
 from .schema import WorkoutSessionResultCreate
+from app.api.v1.sessions.exercise_results.router import router as exercise_result_router
 
 router: APIRouter = APIRouter(prefix="/sessions")
 
@@ -62,3 +63,6 @@ async def record_session_results(
         user_id=user_data.id, session_id=session_id, workout_results=workout_results
     )
     return AppResponse(data=result)
+
+
+router.include_router(exercise_result_router)
