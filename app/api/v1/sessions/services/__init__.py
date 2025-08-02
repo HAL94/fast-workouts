@@ -1,3 +1,5 @@
 from .workout_session_service import WorkoutSessionService
+from .exercise_result_service import ExerciseResultService
+from .exercise_set_result_service import ExerciseSetResultService
 
-__all__ = [WorkoutSessionService]
+__all__ = [WorkoutSessionService, ExerciseResultService, ExerciseSetResultService]
