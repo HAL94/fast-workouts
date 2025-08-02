@@ -5,11 +5,15 @@ from app.api.v1.workouts.schema import (
     CreateWorkoutPlanRequest,
     UpdateWorkoutPlanRequest,
     WorkoutPlanBase,
+    ExercisePlanBase,
+    ExerciseSetPlanBase,
     WorkoutPlanReadPaginatedItem,
     WorkoutPlanReadPagination,
 )
 from app.core.auth.schema import UserRead
-from app.models import ExercisePlan, WorkoutPlan
+from app.models import ExercisePlan, WorkoutPlan, ExerciseSetPlan
+from sqlalchemy import bindparam
+from app.utils.dynamic_pydantic import create_renamed_model
 
 
 class WorkoutPlanService:
@@ -91,12 +95,57 @@ class WorkoutPlanService:
             commit=False,
         )
 
-        await self.repos.exercise_plan.update_many(data.exercise_plans, commit=False)
-
-        for exercise_plan in data.exercise_plans:
-            await self.repos.exercise_set_plan.update_many(
-                data=exercise_plan.exercise_set_plans, commit=False
+        def ex_mapper(data: ExercisePlanBase):
+            Model = create_renamed_model(
+                ExercisePlanBase,
+                rename_mapping={"workout_plan_id": "b_workout_plan_id"},
+                exclude=["exercise_set_plans"],
             )
+            dumped = data.model_dump(
+                exclude_unset=True,
+                by_alias=False,
+                exclude={"workout_plan_id": True, "exercise_set_plans": True},
+            )
+
+            return Model(**dumped, b_workout_plan_id=workout_data.id)
+
+        mapped_ex_plans = list(map(ex_mapper, data.exercise_plans))
+
+        await self.repos.exercise_plan.update_many(
+            mapped_ex_plans,
+            where_clause=[
+                ExercisePlan.workout_plan_id == bindparam("b_workout_plan_id")
+            ],
+            commit=False,
+        )
+
+        def set_plan_mapper(data: ExerciseSetPlanBase, ex_plan_id: int):
+            dumped = data.model_dump(
+                exclude_unset=True,
+                by_alias=False,
+                exclude={"exercise_plan_id": True}
+            )
+            Model = create_renamed_model(
+                ExerciseSetPlanBase,
+                rename_mapping={"exercise_plan_id": "ex_plan_id"},
+            )
+            return Model(**dumped, ex_plan_id=ex_plan_id)
+
+        set_plans = []
+        for exercise_plan in data.exercise_plans:
+            mapped_set_plans = list(
+                map(
+                    lambda item: set_plan_mapper(item, ex_plan_id=exercise_plan.id),
+                    exercise_plan.exercise_set_plans,
+                )
+            )
+            set_plans.extend(mapped_set_plans)
+
+        await self.repos.exercise_set_plan.update_many(
+            data=set_plans,
+            where_clause=[ExerciseSetPlan.exercise_plan_id == bindparam("ex_plan_id")],
+            commit=False,
+        )
 
         await self.repos.session.commit()
 
