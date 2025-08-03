@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 from fastapi import APIRouter, Depends, Query
 import pytz
 
@@ -27,23 +27,19 @@ async def get_workout_plan_schedules(
     workout_plan_id: int,
     user_data: UserRead = Depends(validate_jwt),
     pagination: WorkoutPlanScheduleReadPagination = Query(...),
-    workout_schedule_service: WorkoutScheduleService = Depends(
-        get_schedule_service),
+    workout_schedule_service: WorkoutScheduleService = Depends(get_schedule_service),
 ):
     result = await workout_schedule_service.get_many_workout_schedules(
         user_id=user_data.id, pagination=pagination, workout_plan_id=workout_plan_id
     )
-    print(f"{datetime.now().isoformat()}")
-
     return AppResponse(data=result)
 
 
 @router.get("/suggestions")
 async def get_schedule_reminder_suggestions(
-    payload: GetScheduleReminderSuggestionsRequest
+    payload: GetScheduleReminderSuggestionsRequest,
 ):
-    suggestions = TimeReminderSuggestion.get_reminder_suggestions(
-        payload.start_at)
+    suggestions = TimeReminderSuggestion.get_reminder_suggestions(payload.start_at)
 
     data = ScheduleSuggestionsResponse.model_validate(suggestions)
 
@@ -55,8 +51,7 @@ async def get_workout_plan_schedule(
     workout_plan_id: int,
     workout_plan_schedule_id: int,
     user_data: UserRead = Depends(validate_jwt),
-    workout_schedule_service: WorkoutScheduleService = Depends(
-        get_schedule_service),
+    workout_schedule_service: WorkoutScheduleService = Depends(get_schedule_service),
 ):
     result = await workout_schedule_service.get_workout_schedule(
         user_id=user_data.id,
@@ -71,20 +66,23 @@ async def create_workout_plan_schedule(
     workout_plan_id: int,
     payload: CreateWorkoutScheduleRequest,
     user_data: UserRead = Depends(validate_jwt),
-    workout_plan_service: WorkoutScheduleService = Depends(
-        get_schedule_service),
+    workout_plan_service: WorkoutScheduleService = Depends(get_schedule_service),
 ):
     result = await workout_plan_service.create_workout_schedule(
         user_id=user_data.id,
         workout_plan_id=workout_plan_id,
         payload=payload,
     )
-    result = ScheduleCreateResponse(
-        **result.model_dump())
+    result = ScheduleCreateResponse(**result.model_dump())
 
     if payload.remind_before_minutes:
-        start_at_utc = pytz.UTC.localize(
-            payload.start_at) if not payload.start_at.tzinfo else payload.start_at
+        start_at_utc = (
+            pytz.UTC.localize(payload.start_at)
+            if not payload.start_at.tzinfo
+            else payload.start_at
+        )
         reminder_email.apply_async(
-            (result.id,), eta=start_at_utc - timedelta(minutes=payload.remind_before_minutes))
+            (result.id,),
+            eta=start_at_utc - timedelta(minutes=payload.remind_before_minutes),
+        )
     return AppResponse(data=result)

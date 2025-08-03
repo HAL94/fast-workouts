@@ -4,8 +4,6 @@ from app.api.v1.sessions.schema import (
 )
 from app.api.v1.schema.workout_session import (
     WorkoutSessionBase,
-    ExerciseSetResultBase,
-    ExerciseResultBase,
 )
 from app.models import (
     User,
@@ -24,9 +22,9 @@ from fastapi.exceptions import HTTPException
 from app.api.v1.sessions.schema import (
     WorkoutSessionResultCreate,
     ExerciseResultCreate,
-    SetResultCreate,
 )
 from sqlalchemy.orm import selectinload
+from sqlalchemy import select
 
 
 class WorkoutSessionService:
@@ -176,81 +174,34 @@ class WorkoutSessionService:
                 f"Use update API to modify.",
             )
 
-        # await self.validate_exercise_plans_results(
-        #     user_id=user_id,
-        #     session_id=session_id,
-        #     exercise_results=workout_results.workout_session_results,
-        # )
-
-        # for result_set in workout_results.workout_session_results:
-        #     await self.validate_exercise_set_results(
-        #         user_id=user_id,
-        #         session_id=session_id,
-        #         exercise_plan_id=result_set.exercise_plan_id,
-        #         exercise_set_results=result_set.exercise_set_results,
-        #     )
-
     async def create_session_results(
         self, user_id: int, session_id: int, workout_results: WorkoutSessionResultCreate
     ):
         await self.validate_session_results(
             user_id=user_id, session_id=session_id, workout_results=workout_results
         )
-        found_session = await self.repos.workout_session.get_one(
-            val=session_id,
-            where_clause=[WorkoutSession.user_id == user_id],
+
+        found_session = await self.repos.session.scalar(
+            select(WorkoutSession).where(
+                WorkoutSession.user_id == user_id, WorkoutSession.id == session_id
+            )
         )
 
         found_session.session_comments = (
             workout_results.session_comments or found_session.session_comments
         )
 
-        def exercise_results_mapper(
-            exercise_result: ExerciseResultCreate,
-        ) -> ExerciseResultBase:
-            return ExerciseResultBase(
-                **exercise_result.model_dump(
-                    exclude_unset=True,
-                    by_alias=False,
-                    exclude={"exercise_set_results": True},
-                ),
-                workout_session_id=session_id,
+        exercise_results = workout_results.workout_session_results
+        for ex_result in exercise_results:
+            ex_result.workout_session_id = found_session.id
+            created_exercise_result = ExerciseResultCreate.create_entity(
+                schema=ex_result
             )
-
-        mapped_session_results = list(
-            map(exercise_results_mapper, workout_results.workout_session_results)
-        )
-
-        created_session_results = await self.repos.exercise_result.create_many(
-            data=mapped_session_results, commit=False
-        )
-
-        def exercise_set_result_mapper(
-            exercise_set_result: SetResultCreate, exercise_result: ExerciseResultBase
-        ):
-            return ExerciseSetResultBase(
-                **exercise_set_result.model_dump(exclude_unset=True, by_alias=False),
-                exercise_result_id=exercise_result.id,
-            )
-
-        for index, exercise_result in enumerate(created_session_results):
-            data = workout_results.workout_session_results[index]
-            exercise_set_results = list(
-                map(
-                    lambda item: exercise_set_result_mapper(
-                        item, exercise_result=exercise_result
-                    ),
-                    data.exercise_set_results,
-                )
-            )
-
-            await self.repos.exercise_set_result.create_many(
-                data=exercise_set_results, commit=False
-            )
+            self.repos.session.add(created_exercise_result)
 
         await self.repos.session.commit()
 
-        found_session = await self.repos.workout_session.get_one(
+        return await self.repos.workout_session.get_one(
             val=session_id,
             where_clause=[WorkoutSession.user_id == User.id],
             options=[
@@ -259,5 +210,3 @@ class WorkoutSessionService:
                 )
             ],
         )
-
-        return found_session

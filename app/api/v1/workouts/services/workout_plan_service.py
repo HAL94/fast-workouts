@@ -5,15 +5,12 @@ from app.api.v1.workouts.schema import (
     CreateWorkoutPlanRequest,
     UpdateWorkoutPlanRequest,
     WorkoutPlanBase,
-    ExercisePlanBase,
-    ExerciseSetPlanBase,
     WorkoutPlanReadPaginatedItem,
     WorkoutPlanReadPagination,
 )
 from app.core.auth.schema import UserRead
-from app.models import ExercisePlan, WorkoutPlan, ExerciseSetPlan
-from sqlalchemy import bindparam
-from app.utils.dynamic_pydantic import create_renamed_model
+from app.models import ExercisePlan, WorkoutPlan
+from sqlalchemy import select
 
 
 class WorkoutPlanService:
@@ -77,89 +74,39 @@ class WorkoutPlanService:
     async def update_workout_plan(
         self, user_data: UserRead, data: UpdateWorkoutPlanRequest
     ) -> WorkoutPlanBase:
-        workout_data = await self.repos.workout_plan.get_one(
-            val=data.id, where_clause=[WorkoutPlan.user_id == user_data.id]
-        )
-        workout_plan = WorkoutPlanBase(
-            title=data.title or workout_data.title,
-            description=data.description or workout_data.description,
-            user_id=user_data.id,
-            comments=data.comments or workout_data.comments,
-        )
-        await self.repos.workout_plan.update_one(
-            data=workout_plan,
-            where_clause=[
-                WorkoutPlan.id == data.id,
-                WorkoutPlan.user_id == user_data.id,
-            ],
-            commit=False,
-        )
-
-        def ex_mapper(data: ExercisePlanBase):
-            Model = create_renamed_model(
-                ExercisePlanBase,
-                rename_mapping={"workout_plan_id": "b_workout_plan_id"},
-                exclude=["exercise_set_plans"],
-            )
-            dumped = data.model_dump(
-                exclude_unset=True,
-                by_alias=False,
-                exclude={"workout_plan_id": True, "exercise_set_plans": True},
-            )
-
-            return Model(**dumped, b_workout_plan_id=workout_data.id)
-
-        mapped_ex_plans = list(map(ex_mapper, data.exercise_plans))
-
-        await self.repos.exercise_plan.update_many(
-            mapped_ex_plans,
-            where_clause=[
-                ExercisePlan.workout_plan_id == bindparam("b_workout_plan_id")
-            ],
-            commit=False,
-        )
-
-        def set_plan_mapper(data: ExerciseSetPlanBase, ex_plan_id: int):
-            dumped = data.model_dump(
-                exclude_unset=True,
-                by_alias=False,
-                exclude={"exercise_plan_id": True}
-            )
-            Model = create_renamed_model(
-                ExerciseSetPlanBase,
-                rename_mapping={"exercise_plan_id": "ex_plan_id"},
-            )
-            return Model(**dumped, ex_plan_id=ex_plan_id)
-
-        set_plans = []
-        for exercise_plan in data.exercise_plans:
-            mapped_set_plans = list(
-                map(
-                    lambda item: set_plan_mapper(item, ex_plan_id=exercise_plan.id),
-                    exercise_plan.exercise_set_plans,
+        workout_data = await self.repos.session.scalar(
+            select(WorkoutPlan)
+            .where(WorkoutPlan.id == data.id, WorkoutPlan.user_id == user_data.id)
+            .options(
+                selectinload(WorkoutPlan.exercise_plans).selectinload(
+                    ExercisePlan.exercise_set_plans
                 )
             )
-            set_plans.extend(mapped_set_plans)
-
-        await self.repos.exercise_set_plan.update_many(
-            data=set_plans,
-            where_clause=[ExerciseSetPlan.exercise_plan_id == bindparam("ex_plan_id")],
-            commit=False,
         )
+        workout_plan = WorkoutPlanBase(
+            id=workout_data.id,
+            title=data.title,
+            description=data.description,
+            user_id=user_data.id,
+            comments=data.comments,
+        )
+
+        if data.exercise_plans is not None and len(data.exercise_plans) > 0:
+            workout_plan.exercise_plans = data.exercise_plans
+
+        WorkoutPlanBase.update_entity(schema=workout_plan, entity=workout_data)
 
         await self.repos.session.commit()
 
-        fully_loaded_workout_plan = await self.repos.workout_plan.get_one(
+        return await self.repos.workout_plan.get_one(
             val=data.id,
-            where_clause=[WorkoutPlan.id == data.id],
+            where_clause=[WorkoutPlan.user_id == user_data.id],
             options=[
                 selectinload(WorkoutPlan.exercise_plans).selectinload(
                     ExercisePlan.exercise_set_plans
                 )
             ],
         )
-
-        return fully_loaded_workout_plan
 
     async def add_workout_plan(
         self, user_data: UserRead, create_data: CreateWorkoutPlanRequest
@@ -173,7 +120,7 @@ class WorkoutPlanService:
             exercise_plans=create_data.exercise_plans,
         )
 
-        parsed_workout_data = WorkoutPlanBase.to_entity(workout_data_create)
+        parsed_workout_data = WorkoutPlanBase.create_entity(workout_data_create)
 
         try:
             self.repos.session.add(parsed_workout_data)

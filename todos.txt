@@ -1,0 +1,9 @@
+- Need to apply validation for session results entries (similar to batch create):
+    - validate the relationship chain (plan id - session id - exercise plan id - set plan id)
+    - add unique constraint at db level:
+        - (workout_session_id, exercise_plan_id)
+        - (exercise_result_id, exercise_set_plan_id)
+        - Prevents multiple entries for the same exercise/set result.
+    - For a given exercise result, id of exercise plan should be valid and exists.
+    - For a given set result, id of set plan should be valid and exists
+        - Validity is confirming that that the exercise/set plan id belongs to the chain (plan_id - session_id - exercise_plan_id - set_plan_id)

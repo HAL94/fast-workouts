@@ -50,6 +50,9 @@ class ExerciseResultCreate(AppBaseModel):
     duration_minutes_achieved: Optional[float]
 
     workout_session_id: Optional[int] = None
+    
+    class Meta:
+        orm_model = ExerciseResult
 
 
 class SetResultCreate(AppBaseModel):
@@ -62,5 +65,8 @@ class SetResultCreate(AppBaseModel):
     rpe: Optional[int] = None
 
     exercise_result_id: Optional[int] = None
+    
+    class Meta:
+        orm_model = ExerciseSetResult
 
 

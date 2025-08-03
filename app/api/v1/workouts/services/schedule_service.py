@@ -27,6 +27,13 @@ class WorkoutScheduleService:
         workout_plan_id: int,
         pagination: WorkoutPlanScheduleReadPagination,
     ):
+        if pagination.skip:
+            return await self.repos.workout_schedule.get_all(
+                where_clause=[
+                    WorkoutPlanSchedule.workout_plan_id == workout_plan_id,
+                    WorkoutPlanSchedule.user_id == user_id,
+                ]
+            )
         return await self.repos.workout_schedule.get_many(
             page=pagination.page,
             size=pagination.size,
