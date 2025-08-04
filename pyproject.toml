@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "alembic>=1.16.1",
+    "alembic-utils>=0.8.8",
     "asyncpg>=0.30.0",
     "celery[redis]>=5.5.3",
     "dotenv>=0.9.9",

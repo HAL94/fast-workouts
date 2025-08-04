@@ -1,13 +1,27 @@
 import asyncio
 from logging.config import fileConfig
+from alembic_utils.replaceable_entity import register_entities
 
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 from app.core.database import Base, DATABASE_URL
 from app.models import *  # noqa: F403
-
+from app.db_triggers import (
+    exercise_plan_id_validation_func,
+    exercise_set_plan_id_validation_func,
+    exercise_plan_id_validation_trigger,
+    exercise_set_plan_id_validation_trigger,
+)
 from alembic import context
 
+register_entities(
+    [
+        exercise_plan_id_validation_func,
+        exercise_set_plan_id_validation_func,
+        exercise_plan_id_validation_trigger,
+        exercise_set_plan_id_validation_trigger,
+    ]
+)
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config

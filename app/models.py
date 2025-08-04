@@ -21,14 +21,12 @@ class User(Base):
     __tablename__ = "users"
 
     full_name: Mapped[str] = mapped_column(String, nullable=False)
-    email: Mapped[str] = mapped_column(
-        String, unique=True, index=True, nullable=False)
+    email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
     age: Mapped[int] = mapped_column(Integer, nullable=True)
     hashed_password: Mapped[str] = mapped_column(String, nullable=False)
 
     # relationships
-    workout_plans: Mapped[list["WorkoutPlan"]
-                          ] = relationship(back_populates="user")
+    workout_plans: Mapped[list["WorkoutPlan"]] = relationship(back_populates="user")
     workout_sessions: Mapped[list["WorkoutSession"]] = relationship(
         back_populates="user"
     )
@@ -82,8 +80,7 @@ class ExerciseCategory(Base):
     )
 
     __table_args__ = (
-        UniqueConstraint("exercise_id", "category_id",
-                         name="unique_exercise_category"),
+        UniqueConstraint("exercise_id", "category_id", name="unique_exercise_category"),
     )
 
 
@@ -118,8 +115,7 @@ class Category(Base):
 class MuscleGroup(Base):
     __tablename__ = "muscle_groups"
 
-    muscle_target: Mapped[str] = mapped_column(
-        String, unique=True, nullable=False)
+    muscle_target: Mapped[str] = mapped_column(String, unique=True, nullable=False)
 
     # relationships
     exercise_muscle_associations: Mapped[list["ExerciseMuscleGroup"]] = relationship(
@@ -196,7 +192,8 @@ class WorkoutPlanSchedule(Base):
     __tablename__ = "workout_plan_schedules"
 
     start_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, index=True)
+        DateTime(timezone=True), nullable=False, index=True
+    )
     end_at: Mapped[datetime] = mapped_column(nullable=True, index=True)
     remind_before_minutes: Mapped[int] = mapped_column(nullable=True)
     reminder_sent: Mapped[bool] = mapped_column(default=False, nullable=False)
@@ -247,6 +244,7 @@ class ExercisePlan(Base):
     """
     Describes an exercise plan for a specific workout plan. It also acts as a parent of `exercise_set_plans` list.
     """
+
     __tablename__ = "exercise_plans"
 
     order_in_plan: Mapped[int] = mapped_column(nullable=False)
@@ -256,15 +254,12 @@ class ExercisePlan(Base):
 
     # relationships
     exercise_id: Mapped[int] = mapped_column(ForeignKey("exercises.id"))
-    exercise: Mapped["Exercise"] = relationship(
-        back_populates="exercise_plans")
+    exercise: Mapped["Exercise"] = relationship(back_populates="exercise_plans")
 
     workout_plan_id: Mapped[int] = mapped_column(
         ForeignKey("workout_plans.id", ondelete="CASCADE")
     )
-    workout_plan: Mapped["WorkoutPlan"] = relationship(
-        back_populates="exercise_plans"
-    )
+    workout_plan: Mapped["WorkoutPlan"] = relationship(back_populates="exercise_plans")
 
     exercise_set_plans: Mapped[list["ExerciseSetPlan"]] = relationship(
         back_populates="exercise_plan", cascade="all, delete-orphan"
@@ -279,6 +274,7 @@ class ExerciseSetPlan(Base):
     """
     Describes an exercise set plan for a specific exercise plan. It also acts as a parent of `workout_session_exercise_set_results` list.
     """
+
     __tablename__ = "exercise_set_plans"
 
     set_number: Mapped[int] = mapped_column(nullable=False)
@@ -299,9 +295,10 @@ class ExerciseSetPlan(Base):
 
 
 class ExerciseResult(Base):
-    """ 
-        Describes an exercise results for a specific session for a given exercise plan. 
     """
+    Describes an exercise results for a specific session for a given exercise plan.
+    """
+
     __tablename__ = "exercise_results"
 
     sets_achieved: Mapped[int] = mapped_column(nullable=False)
@@ -314,15 +311,22 @@ class ExerciseResult(Base):
     exercise_plan: Mapped["ExercisePlan"] = relationship(
         back_populates="exercise_results"
     )
-    exercise_set_results: Mapped[
-        list["ExerciseSetResult"]
-    ] = relationship(back_populates="session_exercise_result")
+    exercise_set_results: Mapped[list["ExerciseSetResult"]] = relationship(
+        back_populates="session_exercise_result"
+    )
     exercise_id: Mapped[int] = mapped_column(ForeignKey("exercises.id"))
 
-    workout_session_id: Mapped[int] = mapped_column(
-        ForeignKey("workout_sessions.id"))
+    workout_session_id: Mapped[int] = mapped_column(ForeignKey("workout_sessions.id"))
     workout_session: Mapped["WorkoutSession"] = relationship(
         back_populates="workout_session_results"
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "exercise_plan_id",
+            "workout_session_id",
+            name="session_result_plan_uc",
+        ),
     )
 
 
@@ -332,21 +336,26 @@ class ExerciseSetResult(Base):
     set_number: Mapped[int] = mapped_column(Integer, nullable=False)
     reps_achieved: Mapped[int] = mapped_column(nullable=False)
     weight_achieved: Mapped[float] = mapped_column(nullable=False)
-    duration_seconds: Mapped[int | None] = mapped_column(
-        Integer, nullable=True)
+    duration_seconds: Mapped[int | None] = mapped_column(Integer, nullable=True)
     rpe: Mapped[int | None] = mapped_column(
         Integer, nullable=True
     )  # Rate of Perceived Exertion (1-10)
 
-    exercise_result_id: Mapped[int] = mapped_column(
-        ForeignKey("exercise_results.id")
-    )
-    session_exercise_result: Mapped["ExerciseResult"] = (
-        relationship(back_populates="exercise_set_results")
+    exercise_result_id: Mapped[int] = mapped_column(ForeignKey("exercise_results.id"))
+    session_exercise_result: Mapped["ExerciseResult"] = relationship(
+        back_populates="exercise_set_results"
     )
     exercise_set_plan_id: Mapped[int] = mapped_column(
         ForeignKey("exercise_set_plans.id")
     )
     exercise_set_plan: Mapped["ExerciseSetPlan"] = relationship(
         back_populates="exercise_set_results"
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "exercise_set_plan_id",
+            "exercise_result_id",
+            name="ex_set_result_uc",
+        ),
     )

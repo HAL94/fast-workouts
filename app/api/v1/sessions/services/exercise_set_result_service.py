@@ -77,7 +77,7 @@ class ExerciseSetResultService:
             WorkoutSession.user_id == user_id,
         ]
 
-        found_set = await self.repos.exercise_result.get_one(
+        found_set = await self.repos.exercise_set_result.get_one(
             val=set_result_id, where_clause=base_where
         )
 
