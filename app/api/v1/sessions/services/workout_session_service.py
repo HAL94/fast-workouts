@@ -1,5 +1,5 @@
 from app.api.v1.sessions.schema import (
-    WorkoutSessionReadPagination,
+    WorkoutSessionPagination,
     WorkoutSessionCreate,
 )
 from app.api.v1.schema.workout_session import (
@@ -28,7 +28,7 @@ class WorkoutSessionService:
         self.repos = repos
 
     async def get_many_sessions(
-        self, user_id: int, pagination: WorkoutSessionReadPagination
+        self, user_id: int, pagination: WorkoutSessionPagination
     ):
         base_options = [
             selectinload(WorkoutSession.workout_session_results).selectinload(

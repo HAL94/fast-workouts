@@ -1,7 +1,7 @@
 
 from fastapi import APIRouter, Depends, Query
 
-from app.api.v1.exercises.schema import ExerciseListReadPagination
+from app.api.v1.exercises.schema import ExercisePagination
 from app.api.v1.exercises.service import ExerciseService
 from app.core.common.app_response import AppResponse
 from app.dependencies.services import get_exercise_service
@@ -12,7 +12,7 @@ router: APIRouter = APIRouter(prefix="/exercises")
 
 @router.get("/")
 async def get_exercises(
-    pagination: ExerciseListReadPagination = Query(...),
+    pagination: ExercisePagination = Query(...),
     exercise_service: ExerciseService = Depends(get_exercise_service)
 ):
     result = await exercise_service.get_many_exercises(pagination=pagination)

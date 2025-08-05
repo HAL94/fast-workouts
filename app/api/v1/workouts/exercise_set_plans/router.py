@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 
 from app.api.v1.schema.workout_plan import ExerciseSetPlanBase
-from app.api.v1.workouts.schema import ExerciseSetPlanReadPagination
+from app.api.v1.workouts.schema import ExerciseSetPlanPagination
 from app.api.v1.workouts.services import ExerciseSetPlanService
 from app.core.auth.jwt import validate_jwt
 from app.core.auth.schema import UserRead
@@ -39,7 +39,7 @@ async def get_exercise_set_plans(
     workout_plan_id: int,
     exercise_plan_id: int,
     user_data: UserRead = Depends(validate_jwt),
-    pagination: ExerciseSetPlanReadPagination = Query(...),
+    pagination: ExerciseSetPlanPagination = Query(...),
     exercise_set_service: ExerciseSetPlanService = Depends(
         get_exercise_set_plan_service
     ),

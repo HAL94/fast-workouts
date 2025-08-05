@@ -60,6 +60,7 @@ class ExerciseResultService:
     async def get_many_exercise_results(
         self, user_id: int, session_id: int, pagination: ExerciseResultPagination
     ):
+        # ensure results belong to a workout session belonging to a user
         base_where = [
             ExerciseResult.workout_session_id == WorkoutSession.id,
             WorkoutSession.id == session_id,

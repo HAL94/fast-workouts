@@ -1,6 +1,6 @@
 
 
-from app.api.v1.muscle_groups.schema import MuscleGroupListReadPagination, ExerciseByMuscleResponse
+from app.api.v1.muscle_groups.schema import MuscleGroupPagination, ExerciseByMuscleResponse
 from app.models import Exercise, ExerciseMuscleGroup
 from app.repositories import Repos
 from sqlalchemy.orm import selectinload
@@ -15,7 +15,7 @@ class MuscleGroupService:
             val=muscle_group_id
         )
 
-    async def get_many_muscle_groups(self, pagination: MuscleGroupListReadPagination):
+    async def get_many_muscle_groups(self, pagination: MuscleGroupPagination):
         return await self.repos.muscle_group.get_many(
             page=pagination.page,
             size=pagination.size,

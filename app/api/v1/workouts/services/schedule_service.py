@@ -1,7 +1,7 @@
 from app.api.v1.schema.workout_plan import ScheduleBase
 from app.api.v1.workouts.schema import (
     CreateWorkoutScheduleRequest,
-    WorkoutPlanScheduleReadPagination,
+    WorkoutPlanSchedulePagination,
 )
 from app.models import WorkoutPlanSchedule
 from app.repositories import Repos
@@ -25,7 +25,7 @@ class WorkoutScheduleService:
         self,
         user_id: int,
         workout_plan_id: int,
-        pagination: WorkoutPlanScheduleReadPagination,
+        pagination: WorkoutPlanSchedulePagination,
     ):
         if pagination.skip:
             return await self.repos.workout_schedule.get_all(

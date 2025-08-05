@@ -19,43 +19,48 @@ from app.models import (
 # --- Paginated Read Schema ---
 # Represents pagination schema for workout plans, exercise plans and exercise sets plans
 workout_plan_cols = WorkoutPlan.columns()
-WorkoutPlanPagination = PaginationFactory.create_pagination(
-    WorkoutPlan,
-    sortable_fields=workout_plan_cols, filterable_fields=workout_plan_cols
+WorkoutPlanPaginationBase = PaginationFactory.create_pagination(
+    WorkoutPlan, sortable_fields=workout_plan_cols, filterable_fields=workout_plan_cols
 )
 
 
-class WorkoutPlanReadPagination(WorkoutPlanPagination):
+class WorkoutPlanPagination(WorkoutPlanPaginationBase):
     pass
 
 
 exercise_plan_cols = ExercisePlan.columns()
-WorkoutExercisePlanPagination = PaginationFactory.create_pagination(ExercisePlan,
-                                                                    sortable_fields=exercise_plan_cols, filterable_fields=exercise_plan_cols
-                                                                    )
+ExercisePlanPaginationBase = PaginationFactory.create_pagination(
+    ExercisePlan,
+    sortable_fields=exercise_plan_cols,
+    filterable_fields=exercise_plan_cols,
+)
 
 
-class ExercisePlanReadPagination(WorkoutExercisePlanPagination):
+class ExercisePlanPagination(ExercisePlanPaginationBase):
     pass
 
 
 exercise_set_plan_cols = ExerciseSetPlan.columns()
-ExerciseSetPlanPagination = PaginationFactory.create_pagination(ExerciseSetPlan,
-                                                                sortable_fields=exercise_set_plan_cols, filterable_fields=exercise_set_plan_cols
-                                                                )
+ExerciseSetPlanPaginationBase = PaginationFactory.create_pagination(
+    ExerciseSetPlan,
+    sortable_fields=exercise_set_plan_cols,
+    filterable_fields=exercise_set_plan_cols,
+)
 
 
-class ExerciseSetPlanReadPagination(ExerciseSetPlanPagination):
+class ExerciseSetPlanPagination(ExerciseSetPlanPaginationBase):
     pass
 
 
 workout_schedule_cols = WorkoutPlanSchedule.columns()
-WorkoutPlanSchedulePagination = PaginationFactory.create_pagination(WorkoutPlanSchedule,
-                                                                    sortable_fields=workout_schedule_cols, filterable_fields=workout_schedule_cols
-                                                                    )
+WorkoutPlanSchedulePaginationBase = PaginationFactory.create_pagination(
+    WorkoutPlanSchedule,
+    sortable_fields=workout_schedule_cols,
+    filterable_fields=workout_schedule_cols,
+)
 
 
-class WorkoutPlanScheduleReadPagination(WorkoutPlanSchedulePagination):
+class WorkoutPlanSchedulePagination(WorkoutPlanSchedulePaginationBase):
     pass
 
 
@@ -85,7 +90,9 @@ class CreateWorkoutScheduleRequest(ScheduleBase):
     user_id: ClassVar[int]  # exclusion of user_id
 
     @model_validator(mode="after")
-    def validate_start_time_and_reminder(self,) -> Self:
+    def validate_start_time_and_reminder(
+        self,
+    ) -> Self:
         start_at: Optional[datetime] = self.start_at
         end_at: Optional[datetime] = self.end_at
 
@@ -102,18 +109,18 @@ class CreateWorkoutScheduleRequest(ScheduleBase):
             raise ValueError("Start time will be in the past")
         elif start_at_validation.get("is_too_early"):
             raise ValueError(
-                f"Start time is too early. Need to set schedule at least after: {TimeValidation.REMINDER_LIMITS.get("MIN_SCHEDULE_START_TIME")} from now. Consider starting session now!")
+                f"Start time is too early. Need to set schedule at least after: {TimeValidation.REMINDER_LIMITS.get('MIN_SCHEDULE_START_TIME')} from now. Consider starting session now!"
+            )
 
-        start_at_utc = pytz.UTC.localize(
-            start_at) if not start_at.tzinfo else start_at
+        start_at_utc = pytz.UTC.localize(start_at) if not start_at.tzinfo else start_at
 
         if end_at:
-            end_at_utc = pytz.UTC.localize(
-                end_at) if not end_at.tzinfo else end_at
+            end_at_utc = pytz.UTC.localize(end_at) if not end_at.tzinfo else end_at
 
             if end_at_utc < start_at_utc:
                 raise ValueError(
-                    f"Passed value for end_time {end_at_utc} is before start_at: {start_at_utc}")
+                    f"Passed value for end_time {end_at_utc} is before start_at: {start_at_utc}"
+                )
 
         if remind_before_minutes is not None:
             """
@@ -125,9 +132,9 @@ class CreateWorkoutScheduleRequest(ScheduleBase):
 
             """
             validation_result = TimeValidation.validate_excessive_reminder(
-                start_at=start_at_utc, remind_before_minutes=remind_before_minutes)
-            print("Validation of start_at and remind_before_minutes",
-                  validation_result)
+                start_at=start_at_utc, remind_before_minutes=remind_before_minutes
+            )
+            print("Validation of start_at and remind_before_minutes", validation_result)
             if not validation_result["is_valid"]:
                 raise ValueError(*validation_result["errors"])
 

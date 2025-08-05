@@ -8,10 +8,10 @@ from typing import Optional
 # --- Read Paginated Session Schema ---
 # Represents reads of workout session, exercise results and exercise sets results
 session_cols = WorkoutSession.columns()
-SessionPagination = PaginationFactory.create_pagination(
+WorkoutSessionPaginationBase = PaginationFactory.create_pagination(
     WorkoutSession, sortable_fields=session_cols, filterable_fields=session_cols
 )
-class WorkoutSessionReadPagination(SessionPagination):
+class WorkoutSessionPagination(WorkoutSessionPaginationBase):
     pass
 
 ex_res_cols = ExerciseResult.columns()
@@ -43,7 +43,7 @@ class WorkoutSessionResultCreate(AppBaseModel):
 
 class ExerciseResultCreate(AppBaseModel):
     sets_achieved: int
-    exercise_set_results: list["SetResultCreate"]
+    exercise_set_results: Optional[list["SetResultCreate"]] = []
     exercise_plan_id: int
     exercise_id: int
 

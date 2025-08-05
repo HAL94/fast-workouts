@@ -6,7 +6,7 @@ from app.api.v1.workouts.schema import (
     UpdateWorkoutPlanRequest,
     WorkoutPlanBase,
     WorkoutPlanReadPaginatedItem,
-    WorkoutPlanReadPagination,
+    WorkoutPlanPagination,
 )
 from app.core.auth.schema import UserRead
 from app.models import ExercisePlan, WorkoutPlan
@@ -18,7 +18,7 @@ class WorkoutPlanService:
         self.repos = repos
 
     async def get_many_workouts(
-        self, user_data: UserRead, pagination: WorkoutPlanReadPagination
+        self, user_data: UserRead, pagination: WorkoutPlanPagination
     ) -> PaginatedResponse[WorkoutPlanReadPaginatedItem] | list[WorkoutPlanBase]:
         if pagination.skip:
             workout_ls = await self.repos.workout_plan.get_all(
@@ -127,6 +127,8 @@ class WorkoutPlanService:
             await self.repos.session.commit()
         except Exception as _e:
             print("Failed to parse to model", _e)
+
+        # print(f"Workout Plan: {WorkoutPlanBase(**parsed_workout_data.dict())}")
 
         fully_loaded_workout_plan = await self.repos.workout_plan.get_one(
             val=parsed_workout_data.id,

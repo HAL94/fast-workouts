@@ -1,28 +1,17 @@
 from typing import Any, Type, TypeVar
 from sqlalchemy import URL, create_engine
 from sqlalchemy.orm import Session, sessionmaker
-from app.seed.base_seed import BaseSeed
-from app.seed.category_seed import CategorySeed
-from app.seed.exercise_category_seed import ExerciseCategoryMapSeed
-from app.seed.exercise_muscle_group_seed import ExerciseMuscleGroupSeed
-from app.seed.exercise_seed import ExerciseSeed
-from app.seed.muscle_group_seed import MuscleGroupSeed
-from app.seed.user_seed import UserSeed
+from app.seed import (
+    BaseSeed,
+    CategorySeed,
+    ExerciseCategoryMapSeed,
+    ExerciseMuscleGroupSeed,
+    ExerciseSeed,
+    MuscleGroupSeed,
+    UserSeed,
+)
 from app.core.config import settings
 import inspect
-
-# from app.seed.workout_exercise_plan_seed import WorkoutExercisePlanSeed
-# from app.seed.workout_exercise_set_plan_seed import WorkoutExerciseSetPlanSeed
-# from app.seed.workout_plan_schedule_seed import WorkoutPlanScheduleSeed
-# from app.seed.workout_plan_seed import WorkoutPlanSeed
-# from app.seed.workout_session_exercise_result_set_seed import (
-#     WorkoutSessionExerciseResultSetSeed,
-# )
-# from app.seed.workout_session_exercise_results_seed import (
-#     WorkoutSessionExerciseResultsSeed,
-# )
-# from app.seed.workout_session_seed import WorkoutSessionSeed
-
 
 DATABASE_URL = URL.create(
     drivername="postgresql",
@@ -111,43 +100,13 @@ def main():
     register_dependency(ExerciseMuscleGroupSeed)
     register_dependency(UserSeed)
 
-    # user-dependent models
-    # register_dependency(WorkoutPlanSeed)
-    # register_dependency(WorkoutPlanScheduleSeed)
-    # register_dependency(WorkoutSessionSeed)
-    # register_dependency(WorkoutExercisePlanSeed)
-    # register_dependency(WorkoutExerciseSetPlanSeed)
-    # register_dependency(WorkoutSessionExerciseResultsSeed)
-    # register_dependency(WorkoutSessionExerciseResultSetSeed)
-
     user_seeder = resolve_dependency(UserSeed)
     exercise_muscle_group_seeder = resolve_dependency(ExerciseMuscleGroupSeed)
     exercise_category_seeder = resolve_dependency(ExerciseCategoryMapSeed)
-
-    # workout_plan_seeder = resolve_dependency(WorkoutPlanSeed)
-    # workout_plan_schedule_seeder = resolve_dependency(WorkoutPlanScheduleSeed)
-    # workout_session_seeder = resolve_dependency(WorkoutSessionSeed)
-    # workout_exercise_plan_seeder = resolve_dependency(WorkoutExercisePlanSeed)
-    # workout_session_exercise_results_seeder = resolve_dependency(
-    #     WorkoutSessionExerciseResultsSeed
-    # )
-    # workout_session_exercise_result_set_seeder = resolve_dependency(
-    #     WorkoutSessionExerciseResultSetSeed
-    # )
-    # workout_exercise_set_plan_seeder = resolve_dependency(WorkoutExerciseSetPlanSeed)
-
     user_seeder.create_many()
 
     exercise_category_seeder.create_many()
     exercise_muscle_group_seeder.create_many()
-
-    # workout_plan_seeder.create_many()
-    # workout_plan_schedule_seeder.create_many()
-    # workout_session_seeder.create_many()
-    # workout_exercise_plan_seeder.create_many()
-    # workout_exercise_set_plan_seeder.create_many()
-    # workout_session_exercise_results_seeder.create_many()
-    # workout_session_exercise_result_set_seeder.create_many()
 
     print("Done!")
 

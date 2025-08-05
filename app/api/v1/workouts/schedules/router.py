@@ -7,7 +7,7 @@ from app.api.v1.workouts.schema import (
     GetScheduleReminderSuggestionsRequest,
     ScheduleCreateResponse,
     ScheduleSuggestionsResponse,
-    WorkoutPlanScheduleReadPagination,
+    WorkoutPlanSchedulePagination,
 )
 from app.api.v1.workouts.services import WorkoutScheduleService
 from app.api.v1.workouts.utils.schedule_time_validator import TimeReminderSuggestion
@@ -26,7 +26,7 @@ router: APIRouter = APIRouter(
 async def get_workout_plan_schedules(
     workout_plan_id: int,
     user_data: UserRead = Depends(validate_jwt),
-    pagination: WorkoutPlanScheduleReadPagination = Query(...),
+    pagination: WorkoutPlanSchedulePagination = Query(...),
     workout_schedule_service: WorkoutScheduleService = Depends(get_schedule_service),
 ):
     result = await workout_schedule_service.get_many_workout_schedules(

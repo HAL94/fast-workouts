@@ -1,6 +1,6 @@
 from sqlalchemy import asc, update
 from app.api.v1.schema.workout_plan import ExerciseSetPlanBase
-from app.api.v1.workouts.schema import ExerciseSetPlanReadPagination
+from app.api.v1.workouts.schema import ExerciseSetPlanPagination
 from app.models import ExercisePlan, ExerciseSetPlan, User, WorkoutPlan
 from app.repositories import Repos
 
@@ -48,7 +48,7 @@ class ExerciseSetPlanService:
         workout_plan_id: int,
         user_id: int,
         exercise_plan_id: int,
-        pagination: ExerciseSetPlanReadPagination,
+        pagination: ExerciseSetPlanPagination,
     ):
         base_where_clause = [
             ExerciseSetPlan.exercise_plan_id == ExercisePlan.id,

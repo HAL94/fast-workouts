@@ -1,6 +1,6 @@
 from sqlalchemy import asc, update
 from app.api.v1.schema.workout_plan import ExercisePlanBase
-from app.api.v1.workouts.schema import ExercisePlanReadPagination
+from app.api.v1.workouts.schema import ExercisePlanPagination
 from app.models import ExercisePlan, User, WorkoutPlan
 from app.repositories import Repos
 
@@ -13,7 +13,7 @@ class ExercisePlanService:
         self,
         workout_plan_id: int,
         user_id: int,
-        pagination: ExercisePlanReadPagination,
+        pagination: ExercisePlanPagination,
     ):
         base_where_clause = [
             ExercisePlan.workout_plan_id == WorkoutPlan.id,
@@ -22,20 +22,17 @@ class ExercisePlanService:
             WorkoutPlan.id == workout_plan_id,
         ]
         base_order_clause = [asc(ExercisePlan.order_in_plan)]
-        
+
         if pagination.skip:
-            return await self.repos.exercise_plan.get_all(where_clause=base_where_clause,
-                                                          order_clause=base_order_clause)
+            return await self.repos.exercise_plan.get_all(
+                where_clause=base_where_clause, order_clause=base_order_clause
+            )
 
         return await self.repos.exercise_plan.get_many(
             page=pagination.page,
             size=pagination.size,
-            where_clause=[
-                *pagination.filter_fields,
-                *base_where_clause
-            ],
-            order_clause=[*pagination.sort_fields,
-                          *base_order_clause],
+            where_clause=[*pagination.filter_fields, *base_where_clause],
+            order_clause=[*pagination.sort_fields, *base_order_clause],
         )
 
     async def update_exercise_plan(

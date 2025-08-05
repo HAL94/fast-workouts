@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 
 from app.api.v1.sessions.schema import (
-    WorkoutSessionReadPagination,
+    WorkoutSessionPagination,
     WorkoutSessionCreate,
 )
 from app.api.v1.sessions.services.workout_session_service import WorkoutSessionService
@@ -17,7 +17,7 @@ router: APIRouter = APIRouter(prefix="/sessions")
 
 @router.get("/")
 async def get_workout_sessions(
-    pagination: WorkoutSessionReadPagination = Query(...),
+    pagination: WorkoutSessionPagination = Query(...),
     user_data: UserRead = Depends(validate_jwt),
     session_service: WorkoutSessionService = Depends(get_session_service),
 ):
