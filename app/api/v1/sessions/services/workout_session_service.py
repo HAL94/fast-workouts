@@ -7,9 +7,7 @@ from app.api.v1.schema.workout_session import (
 )
 from app.models import (
     ExercisePlan,
-    ExerciseSetResult,
     User,
-    WorkoutPlan,
     WorkoutSession,
     ExerciseResult,
     WorkoutSessionStatus,
@@ -147,5 +145,4 @@ class WorkoutSessionService:
 
             for ex_result in ex_results:
                 results.append({"plan": ex_plan, "outcome": ex_result})
-                
         return results

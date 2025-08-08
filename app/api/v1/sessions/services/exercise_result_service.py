@@ -4,7 +4,7 @@ from app.api.v1.sessions.schema import (
 )
 from app.api.v1.schema.workout_session import ExerciseResultBase
 from app.models import WorkoutSession, ExerciseResult
-
+from sqlalchemy.orm import selectinload
 
 class ExerciseResultService:
     def __init__(self, repos: Repos):
@@ -16,7 +16,16 @@ class ExerciseResultService:
             val=data.workout_session_id,
             where_clause=[WorkoutSession.user_id == user_id],
         )
-        return await self.repos.exercise_result.create(data=data)
+        # return await self.repos.exercise_result.create(data=data)
+        created_ex_res = ExerciseResultBase.create_entity(schema=data)
+
+        self.repos.session.add(created_ex_res)
+
+        await self.repos.session.commit()
+
+        return await self.repos.exercise_result.get_one(
+            val=created_ex_res.id, options=[selectinload(ExerciseResult.exercise_set_results)]
+        )
 
     async def update_exercise_result(self, user_id: int, data: ExerciseResultBase):
         found_exercise = await self.repos.exercise_result.get_one(

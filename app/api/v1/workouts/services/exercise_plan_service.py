@@ -1,4 +1,5 @@
-from sqlalchemy import asc, update
+from sqlalchemy import asc, select, update
+from sqlalchemy.orm import selectinload
 from app.api.v1.schema.workout_plan import ExercisePlanBase
 from app.api.v1.workouts.schema import ExercisePlanPagination
 from app.models import ExercisePlan, User, WorkoutPlan
@@ -47,6 +48,16 @@ class ExercisePlanService:
             workout_plan_id=workout_plan_id,
             exercise_plan_id=exercise_plan_id,
         )
+        exercise_plan = await self.repos.session.scalar(
+            select(ExercisePlan)
+            .where(ExercisePlan.id == exercise_plan_id)
+            .join(WorkoutPlan, ExercisePlan.workout_plan_id == WorkoutPlan.id)
+            .where(
+                WorkoutPlan.user_id == user_id,
+                WorkoutPlan.id == workout_plan_id,
+            )
+            .options(selectinload(ExercisePlan.exercise_set_plans))
+        )
         old_order = old_exercise.order_in_plan
         new_order = payload.order_in_plan
 
@@ -80,12 +91,15 @@ class ExercisePlanService:
                 )
                 .values(order_in_plan=ExercisePlan.order_in_plan - 1)
             )
-        return await self.repos.exercise_plan.update_one(
-            data=payload,
-            where_clause=[
-                ExercisePlan.id == exercise_plan_id,
-                ExercisePlan.workout_plan_id == workout_plan_id,
-            ],
+        # print(f"Fetched exercise_plan: {exercise_plan}")
+        # update full graph (exercise plan - exercise set plan)
+        ExercisePlanBase.update_entity(payload, entity=exercise_plan)
+
+        await self.repos.session.commit()
+
+        return await self.repos.exercise_plan.get_one(
+            val=exercise_plan_id,
+            options=[selectinload(ExercisePlan.exercise_set_plans)],
         )
 
     async def get_one_exercise_plan(
@@ -115,7 +129,16 @@ class ExercisePlanService:
             )
             .values(order_in_plan=ExercisePlan.order_in_plan + 1)
         )
-        return await self.repos.exercise_plan.create(data=payload)
+
+        created_plan = ExercisePlanBase.create_entity(payload)
+        self.repos.session.add(created_plan)
+        await self.repos.session.commit()
+
+        return await self.repos.exercise_plan.get_one(
+            val=created_plan.id, options=[selectinload(ExercisePlan.exercise_set_plans)]
+        )
+
+        # return await self.repos.exercise_plan.create(data=payload)
 
     async def delete_exercise_plan(
         self, workout_plan_id: int, user_id: int, exercise_plan_id: int
