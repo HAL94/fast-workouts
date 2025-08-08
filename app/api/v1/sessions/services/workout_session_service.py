@@ -6,10 +6,13 @@ from app.api.v1.schema.workout_session import (
     WorkoutSessionBase,
 )
 from app.models import (
+    ExercisePlan,
+    ExerciseSetResult,
     User,
+    WorkoutPlan,
     WorkoutSession,
     ExerciseResult,
-    WorkoutSessionStatus
+    WorkoutSessionStatus,
 )
 from app.repositories import Repos
 
@@ -92,7 +95,7 @@ class WorkoutSessionService:
         )
 
         exercise_results = workout_results.workout_session_results
-        
+
         for ex_result in exercise_results:
             ex_result.workout_session_id = found_session.id
             created_exercise_result = ExerciseResultCreate.create_entity(
@@ -111,3 +114,38 @@ class WorkoutSessionService:
                 )
             ],
         )
+
+    async def get_workout_report(
+        self,
+        session_id: int,
+        user_id: int,
+    ):
+        workout_session = await self.repos.workout_session.get_one(
+            val=session_id,
+            where_clause=[WorkoutSession.user_id == user_id],
+            options=[
+                selectinload(WorkoutSession.workout_session_results).selectinload(
+                    ExerciseResult.exercise_set_results
+                )
+            ],
+        )
+
+        exercise_plans = await self.repos.exercise_plan.get_all(
+            where_clause=[
+                ExercisePlan.workout_plan_id == workout_session.workout_plan_id
+            ],
+            options=[selectinload(ExercisePlan.exercise_set_plans)],
+        )
+
+        results = []
+
+        for ex_plan in exercise_plans:
+            ex_results = await self.repos.exercise_result.get_all(
+                where_clause=[ExerciseResult.exercise_plan_id == ex_plan.id],
+                options=[selectinload(ExerciseResult.exercise_set_results)],
+            )
+
+            for ex_result in ex_results:
+                results.append({"plan": ex_plan, "outcome": ex_result})
+                
+        return results

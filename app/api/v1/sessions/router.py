@@ -66,3 +66,16 @@ async def record_session_results(
 
 
 router.include_router(exercise_result_router)
+
+
+@router.get("/{session_id}/report")
+async def generate_workout_report(
+    session_id: int,
+    user_data: UserRead = Depends(validate_jwt),
+    session_service: WorkoutSessionService = Depends(get_session_service),
+):
+    result = await session_service.get_workout_report(
+        session_id=session_id, user_id=user_data.id
+    )
+
+    return AppResponse(data=result)

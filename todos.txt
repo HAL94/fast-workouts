@@ -1,4 +1,19 @@
-TASKS
+TASKS:
+
+- Report endpoint for a workout/session [x]
+
+- Add Dockerization
+    - Dockerfile for backend service
+    - docker-compose file for various services:
+        - Backend App
+        - Postgres
+        - Migration (Basic app data)
+        - Redis
+        - Celery
+        
+- Task/Set ordering:
+    - find a way to guarantee the exercise/set plans orders
+
 - Scheduling:
     - Restructure Model:
         - Add field "reminder_send_status" [string/enum]
