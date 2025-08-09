@@ -17,6 +17,7 @@ from app.core.auth.jwt import validate_jwt
 from app.core.auth.schema import UserRead
 from app.core.common.app_response import AppResponse
 from app.dependencies.services import get_schedule_service, get_session_service
+from app.models import ScheduleStatus, WorkoutSessionStatus
 from app.worker.tasks import reminder_email
 from app.worker.tasks.auto_start_session import start_scheduled_session
 
@@ -72,11 +73,17 @@ async def create_workout_plan_schedule(
     workout_plan_service: WorkoutScheduleService = Depends(get_schedule_service),
     session_service: WorkoutSessionService = Depends(get_session_service),
 ):
+    should_remind = payload.remind_before_minutes is not None
+
+    if not should_remind:
+        payload.reminder_status = ScheduleStatus.unset
+
     result = await workout_plan_service.create_workout_schedule(
         user_id=user_data.id,
         workout_plan_id=workout_plan_id,
         payload=payload,
     )
+
     result = ScheduleCreateResponse(**result.model_dump())
 
     start_at_utc = (
@@ -84,7 +91,8 @@ async def create_workout_plan_schedule(
         if not payload.start_at.tzinfo
         else payload.start_at
     )
-    if payload.remind_before_minutes is not None and payload.remind_before_minutes > 0:
+    if should_remind:
+        # send reminder email
         reminder_email.apply_async(
             (result.id,),
             eta=start_at_utc - timedelta(minutes=payload.remind_before_minutes),
@@ -92,7 +100,10 @@ async def create_workout_plan_schedule(
 
     created_workout_session = await session_service.schedule_session(
         payload=WorkoutSessionBase(
-            workout_plan_id=workout_plan_id, user_id=user_data.id, schedule_id=result.id
+            workout_plan_id=workout_plan_id,
+            user_id=user_data.id,
+            schedule_id=result.id,
+            status=WorkoutSessionStatus.scheduled,
         ),
     )
 

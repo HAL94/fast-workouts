@@ -54,7 +54,7 @@ def reminder_email(schedule_id: int | None = None):
                 logger.info(f"Fetched schedule entity: {workout_schedule}")
 
                 workout_schedule.reminder_send_time = datetime.now()
-                workout_schedule.reminder_send_status = ScheduleStatus.sent
+                workout_schedule.reminder_status = ScheduleStatus.sent
 
                 await session.commit()
                 logger.info(f"Database updated for schedule_id: {schedule_id}")

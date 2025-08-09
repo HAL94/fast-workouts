@@ -20,6 +20,7 @@ class WorkoutSessionStatus(str, enum.Enum):
 class ScheduleStatus(str, enum.Enum):
     pending = "pending"
     sent = "sent"
+    unset = "unset"
 
 
 class User(Base):
@@ -201,7 +202,7 @@ class WorkoutPlanSchedule(Base):
     )
     end_at: Mapped[datetime] = mapped_column(nullable=True, index=True)
     remind_before_minutes: Mapped[int] = mapped_column(nullable=True)
-    reminder_send_status: Mapped[str] = mapped_column(
+    reminder_status: Mapped[str] = mapped_column(
         default=ScheduleStatus.pending, nullable=False
     )
     reminder_send_time: Mapped[datetime] = mapped_column(nullable=True)

@@ -55,8 +55,8 @@ class ScheduleBase(AppBaseModel):
     user_id: int
     start_at: datetime
     end_at: Optional[datetime] = None
-    remind_before_minutes: Optional[float] = None
-    reminder_send_status: ScheduleStatus = Field(default=ScheduleStatus.pending)
+    remind_before_minutes: Optional[float] = Field(None, gt=0)
+    reminder_status: ScheduleStatus = Field(default=ScheduleStatus.unset)
     reminder_send_time: Optional[datetime] = None  # actual time when reminder was sent
     reminder_scheduled_send_time: Optional[datetime] = (
         None  # schedule time when reminder shuld be sent

@@ -50,6 +50,12 @@ class WorkoutSessionService:
             relations=base_options,
         )
 
+    async def get_one_session(self, user_id: int, session_id: int):
+        data = await self.repos.workout_session.get_one(
+            val=session_id, where_clause=[WorkoutSession.user_id == user_id]
+        )        
+        return data
+
     async def start_session_now(self, user_id: int, payload: WorkoutSessionCreate):
         data = WorkoutSessionBase(
             user_id=user_id,

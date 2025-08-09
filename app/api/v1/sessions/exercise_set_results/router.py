@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 from app.api.v1.schema.workout_session import ExerciseSetResultBase
+from app.api.v1.sessions.validate_session_status import is_session_status_valid
 from app.dependencies.services import get_exercise_set_result_service
 from app.api.v1.sessions.services import ExerciseSetResultService
 from app.core.auth.schema import UserRead
@@ -12,6 +13,7 @@ router: APIRouter = APIRouter(prefix="/{exercise_result_id}/sets")
 
 @router.post("/")
 async def create_exercise_set_result(
+    session_id: int,
     exercise_result_id: int,
     exercise_set_result_data: ExerciseSetResultBase,
     user_data: UserRead = Depends(validate_jwt),
@@ -19,6 +21,11 @@ async def create_exercise_set_result(
         get_exercise_set_result_service
     ),
 ):
+    await is_session_status_valid(
+        session=exercise_set_service.repos.session,
+        user_id=user_data.id,
+        session_id=session_id,
+    )
     result = await exercise_set_service.add_exercise_set_result(
         user_id=user_data.id,
         exercise_result_id=exercise_result_id,
@@ -66,6 +73,7 @@ async def get_one_result_set(
 
 @router.patch("/{set_result_id}")
 async def update_set_result(
+    session_id: int,
     exercise_result_id: int,
     set_result_id: int,
     data: ExerciseSetResultBase,
@@ -74,6 +82,11 @@ async def update_set_result(
         get_exercise_set_result_service
     ),
 ):
+    await is_session_status_valid(
+        session=exercise_set_service.repos.session,
+        user_id=user_data.id,
+        session_id=session_id,
+    )
     result = await exercise_set_service.update_one_exercise_set_result(
         user_id=user_data.id,
         exercise_result_id=exercise_result_id,

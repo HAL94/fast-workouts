@@ -27,6 +27,18 @@ async def get_workout_sessions(
     return AppResponse(data=result)
 
 
+@router.get("/{session_id}")
+async def get_workout_session(
+    session_id: int,
+    user_data: UserRead = Depends(validate_jwt),
+    session_service: WorkoutSessionService = Depends(get_session_service),
+):
+    result = await session_service.get_one_session(
+        user_id=user_data.id, session_id=session_id
+    )
+    return AppResponse(data=result)
+
+
 @router.post("/start")
 async def create_session(
     payload: WorkoutSessionCreate,
