@@ -17,6 +17,11 @@ class WorkoutSessionStatus(str, enum.Enum):
     cancelled = "cancelled"
 
 
+class ScheduleStatus(str, enum.Enum):
+    pending = "pending"
+    sent = "sent"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -196,8 +201,12 @@ class WorkoutPlanSchedule(Base):
     )
     end_at: Mapped[datetime] = mapped_column(nullable=True, index=True)
     remind_before_minutes: Mapped[int] = mapped_column(nullable=True)
-    reminder_sent: Mapped[bool] = mapped_column(default=False, nullable=False)
+    reminder_send_status: Mapped[str] = mapped_column(
+        default=ScheduleStatus.pending, nullable=False
+    )
     reminder_send_time: Mapped[datetime] = mapped_column(nullable=True)
+    reminder_scheduled_send_time: Mapped[datetime] = mapped_column(nullable=True)
+    auto_start_session: Mapped[bool] = mapped_column(nullable=False)
 
     # relationships
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))

@@ -15,7 +15,7 @@ TASKS:
     - find a way to guarantee the exercise/set plans orders
 
 - Scheduling:
-    - Restructure Model:
+    - Restructure Model [x]:
         - Add field "reminder_send_status" [string/enum]
             - Possible Values: 'pending' | 'sent'
         - Add field "reminder_scheduled_send_time" [datetime]
@@ -23,21 +23,23 @@ TASKS:
         - Add/Modify field "reminder_send_time" [datetime]
             - Records reminder actual send time.
         - Add field "auto_start_session" [bool]
-            - Will create a session and start it when the schedule time is reached. (needs a worker)
+            - Will create a session and start it when the schedule start time is reached. (needs a worker)
+    
     - When a schedule is successfully created for a workout plan, a workout session should be created with state of 'scheduled'.
-        - if the field "auto_start_session" is set to True, then the session should be started automatically once we reach the schedule time.
+    
     - If the schedule has a reminder, and reminder is sent successfully, the schedule entity must be updated to reflect the sending status, ensuring:
         - reminder_send_status -> "sent".
         - reminder_send_time -> actual date/time scheduled sent.
-        - If fthe field "auto_start_session" is set to True, 
-            Then Workout session should also be started automatically and its state should be set to 'in progress'.
+    
+    - If the field "auto_start_session" is set to True, 
+        Then Workout session should also be started automatically and its state should be set to 'in progress'.
     
 
-- Bulk add or update an entity with its nested relations:
+- Bulk add or update an entity with its nested relations [x]:
     - WorkoutPlan [x]
     - WorkoutSession [x]
-    - ExercisePlan []    
-    - ExerciseResult []
+    - ExercisePlan [x]    
+    - ExerciseResult [x]
     
 - Need to apply validation for session results entries (similar to batch create) [x]:
     - validate the relationship chain (plan id - session id - exercise plan id - set plan id)

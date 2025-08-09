@@ -2,6 +2,8 @@ from datetime import timedelta
 from fastapi import APIRouter, Depends, Query
 import pytz
 
+from app.api.v1.schema.workout_session import WorkoutSessionBase
+from app.api.v1.sessions.services.workout_session_service import WorkoutSessionService
 from app.api.v1.workouts.schema import (
     CreateWorkoutScheduleRequest,
     GetScheduleReminderSuggestionsRequest,
@@ -14,8 +16,9 @@ from app.api.v1.workouts.utils.schedule_time_validator import TimeReminderSugges
 from app.core.auth.jwt import validate_jwt
 from app.core.auth.schema import UserRead
 from app.core.common.app_response import AppResponse
-from app.dependencies.services import get_schedule_service
+from app.dependencies.services import get_schedule_service, get_session_service
 from app.worker.tasks import reminder_email
+from app.worker.tasks.auto_start_session import start_scheduled_session
 
 router: APIRouter = APIRouter(
     prefix="/{workout_plan_id}/schedules", dependencies=[Depends(validate_jwt)]
@@ -67,6 +70,7 @@ async def create_workout_plan_schedule(
     payload: CreateWorkoutScheduleRequest,
     user_data: UserRead = Depends(validate_jwt),
     workout_plan_service: WorkoutScheduleService = Depends(get_schedule_service),
+    session_service: WorkoutSessionService = Depends(get_session_service),
 ):
     result = await workout_plan_service.create_workout_schedule(
         user_id=user_data.id,
@@ -75,14 +79,25 @@ async def create_workout_plan_schedule(
     )
     result = ScheduleCreateResponse(**result.model_dump())
 
-    if payload.remind_before_minutes:
-        start_at_utc = (
-            pytz.UTC.localize(payload.start_at)
-            if not payload.start_at.tzinfo
-            else payload.start_at
-        )
+    start_at_utc = (
+        pytz.UTC.localize(payload.start_at)
+        if not payload.start_at.tzinfo
+        else payload.start_at
+    )
+    if payload.remind_before_minutes is not None and payload.remind_before_minutes > 0:
         reminder_email.apply_async(
             (result.id,),
             eta=start_at_utc - timedelta(minutes=payload.remind_before_minutes),
         )
+
+    created_workout_session = await session_service.schedule_session(
+        payload=WorkoutSessionBase(
+            workout_plan_id=workout_plan_id, user_id=user_data.id, schedule_id=result.id
+        ),
+    )
+
+    if payload.auto_start_session:
+        session_id = created_workout_session.id
+        start_scheduled_session.apply_async((session_id,), eta=start_at_utc)
+
     return AppResponse(data=result)

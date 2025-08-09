@@ -65,7 +65,13 @@ class WorkoutSessionService:
 
         if found_session.status == WorkoutSessionStatus.completed:
             raise HTTPException(
-                detail="Workout Session is already ended", status_code=409
+                detail="Workout Session is already ended", status_code=400
+            )
+
+        if found_session.status == WorkoutSessionStatus.scheduled:
+            raise HTTPException(
+                detail="Workout Session has not yet started! It is scheduled",
+                status_code=400,
             )
 
         found_session.ended_at = datetime.now()
@@ -79,14 +85,21 @@ class WorkoutSessionService:
             ],
         )
 
+    async def schedule_session(self, payload: WorkoutSessionBase):
+        return await self.repos.workout_session.create(data=payload)
+
     async def create_session_results(
         self, user_id: int, session_id: int, workout_results: WorkoutSessionResultCreate
     ):
         found_session = await self.repos.session.scalar(
             select(WorkoutSession).where(
-                WorkoutSession.user_id == user_id, WorkoutSession.id == session_id
+                WorkoutSession.user_id == user_id,
+                WorkoutSession.id == session_id,
             )
         )
+
+        if found_session.status == WorkoutSessionStatus.scheduled:
+            raise ValueError("Workout session has not yet started!")
 
         found_session.session_comments = (
             workout_results.session_comments or found_session.session_comments
