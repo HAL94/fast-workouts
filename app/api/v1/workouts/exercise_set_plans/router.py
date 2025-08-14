@@ -86,10 +86,10 @@ async def update_exercise_set_plan(
     ),
 ):
     result = await exercise_set_service.update_set_plan(
-        exercise_set_plan_id=exercise_set_plan_id,
         exercise_plan_id=exercise_plan_id,
         workout_plan_id=workout_plan_id,
         user_id=user_data.id,
+        exercise_set_plan_id=exercise_set_plan_id,
         payload=payload,
     )
 

@@ -11,10 +11,10 @@ TASKS:
         - Redis
         - Celery
         
-- Task/Set ordering:
+- Task/Set ordering [x]:
     - find a way to guarantee the exercise/set plans orders
 
-- Scheduling:
+- Scheduling [x]:
     - Restructure Model [x]:
         - Add field "reminder_send_status" [string/enum]
             - Possible Values: 'pending' | 'sent'
@@ -25,13 +25,13 @@ TASKS:
         - Add field "auto_start_session" [bool]
             - Will create a session and start it when the schedule start time is reached. (needs a worker)
     
-    - When a schedule is successfully created for a workout plan, a workout session should be created with state of 'scheduled'.
+    - When a schedule is successfully created for a workout plan, a workout session should be created with state of 'scheduled'. [x]
     
-    - If the schedule has a reminder, and reminder is sent successfully, the schedule entity must be updated to reflect the sending status, ensuring:
+    - If the schedule has a reminder, and reminder is sent successfully, the schedule entity must be updated to reflect the sending status, ensuring [x]:
         - reminder_send_status -> "sent".
         - reminder_send_time -> actual date/time scheduled sent.
     
-    - If the field "auto_start_session" is set to True, 
+    - If the field "auto_start_session" is set to True [x], 
         Then Workout session should also be started automatically and its state should be set to 'in progress'.
     
 

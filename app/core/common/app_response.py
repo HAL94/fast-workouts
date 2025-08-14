@@ -121,7 +121,7 @@ class AppBaseModel(BaseModel):
                     setattr(entity, key, [inner for inner in value])
             elif isinstance(value, AppBaseModel):
                 setattr(entity, key, value.create_entity(value))
-            else:
+            elif value is not None:
                 setattr(entity, key, value)
 
         return entity

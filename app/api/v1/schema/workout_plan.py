@@ -22,7 +22,7 @@ class WorkoutPlanBase(AppBaseModel):
 class ExercisePlanBase(AppBaseModel):
     id: Optional[int] = None
     exercise_id: int
-    order_in_plan: int = Field(min=1, description="Order in the workout plan")
+    order_in_plan: int = Field(ge=1, description="Order in the workout plan")
     target_sets: int
     target_duration_minutes: Optional[float] = None
     notes: Optional[str] = None

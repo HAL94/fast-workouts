@@ -53,7 +53,7 @@ class WorkoutSessionService:
     async def get_one_session(self, user_id: int, session_id: int):
         data = await self.repos.workout_session.get_one(
             val=session_id, where_clause=[WorkoutSession.user_id == user_id]
-        )        
+        )
         return data
 
     async def start_session_now(self, user_id: int, payload: WorkoutSessionCreate):
@@ -106,6 +106,8 @@ class WorkoutSessionService:
 
         if found_session.status == WorkoutSessionStatus.scheduled:
             raise ValueError("Workout session has not yet started!")
+        if found_session.status == WorkoutSessionStatus.cancelled:
+            raise ValueError("Workout session has been cancelled!")
 
         found_session.session_comments = (
             workout_results.session_comments or found_session.session_comments
@@ -139,13 +141,21 @@ class WorkoutSessionService:
     ):
         workout_session = await self.repos.workout_session.get_one(
             val=session_id,
-            where_clause=[WorkoutSession.user_id == user_id],
+            where_clause=[
+                WorkoutSession.user_id == user_id,
+                WorkoutSession.status == WorkoutSessionStatus.completed,
+            ],
             options=[
                 selectinload(WorkoutSession.workout_session_results).selectinload(
                     ExerciseResult.exercise_set_results
                 )
             ],
         )
+
+        if not workout_session:
+            return {
+                "message": "Session is not yet completed, please end it to get a report"
+            }
 
         exercise_plans = await self.repos.exercise_plan.get_all(
             where_clause=[
