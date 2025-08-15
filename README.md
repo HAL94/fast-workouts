@@ -255,4 +255,4 @@ if the workout is between `12 hour` to `24 hours` in the future, these reminder 
 - Ensuring the sequence of exercise plans and/or set plans is still relatively buggy.
 - Reports could be improved with AI
     - Could be more descriptive on analyzing if user's strngeth, cardio or general stats have improved.
-
+- Support generating trends for exercise/set results
