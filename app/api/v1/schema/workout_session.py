@@ -5,13 +5,12 @@ from typing import Optional
 #     ExercisePlanBase,
 # )
 from app.core.common.app_response import AppBaseModel
-from pydantic import Field
 from app.models import WorkoutSession, ExerciseResult, ExerciseSetResult
 
 
 class WorkoutSessionBase(AppBaseModel):
     id: Optional[int] = None
-    started_at: Optional[datetime] = Field(default=datetime.now)
+    started_at: Optional[datetime] = None
     ended_at: Optional[datetime] = None
     duration_minutes: Optional[int] = None
     status: Optional[str] = None

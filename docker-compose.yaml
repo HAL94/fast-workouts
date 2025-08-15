@@ -60,13 +60,13 @@ services:
       POSTGRES_PASSWORD: ${PG_PW}
       POSTGRES_PORT: ${PG_PORT}
 
-    volumes:
-      - ./postgres_data:/var/lib/postgresql/data
+    # volumes:
+    #   - ./postgres_data:/var/lib/postgresql/data
 
   redis:
     image: redis:7.2.5-alpine
-    volumes:
-      - ./redis_data:/data
+    # volumes:
+    #   - ./redis_data:/data
     ports:
       - "6379:6379"
 

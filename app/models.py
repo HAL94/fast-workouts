@@ -225,7 +225,7 @@ class WorkoutSession(Base):
     __tablename__ = "workout_sessions"
 
     title: Mapped[str] = mapped_column(String(100), nullable=True)
-    started_at: Mapped[datetime] = mapped_column(nullable=True, default=func.now())
+    started_at: Mapped[datetime] = mapped_column(nullable=True)
     ended_at: Mapped[datetime] = mapped_column(nullable=True)
     duration_minutes: Mapped[int] = mapped_column(nullable=True)
     status: Mapped[str] = mapped_column(String(50), nullable=True)

@@ -61,7 +61,8 @@ class WorkoutSessionService:
             user_id=user_id,
             workout_plan_id=payload.workout_plan_id,
             status=WorkoutSessionStatus.in_progress,
-        )
+            started_at=datetime.now()
+        )        
         return await self.repos.workout_session.create(data=data)
 
     async def end_session_now(self, user_id: int, session_id: int):
