@@ -39,7 +39,7 @@ def validate_order_in_plan_number(func: Callable) -> Coroutine[Any, Any, Any]:
                 exercise_plan_id=exercise_plan_id,
             )
         else:
-            # 1.b Verify if workout plan belongs to the user.
+            # 1.b Else; we are adding, verify if workout plan belongs to the user.
             await self.repos.workout_plan.get_one(
                 val=workout_plan_id,
                 where_clause=[WorkoutPlan.user_id == user_id],
@@ -53,6 +53,7 @@ def validate_order_in_plan_number(func: Callable) -> Coroutine[Any, Any, Any]:
         )
 
         new_order = payload.order_in_plan
+        # 3.a Update Scenario: we are updating an existing exercise plan
         if old_exercise and new_order > max_order_in_plan:
             raise HTTPException(
                 status_code=400,
@@ -60,12 +61,19 @@ def validate_order_in_plan_number(func: Callable) -> Coroutine[Any, Any, Any]:
                 f"order_in_plan should not exceed {max_order_in_plan}.",
             )
 
-        # 3. Validate the new order_in_plan number.
-        if max_order_in_plan and payload.order_in_plan > (max_order_in_plan + 1):
+        # 3.b Create Scenario: validate the new order_in_plan number.
+        if max_order_in_plan and new_order > (max_order_in_plan + 1):
             raise HTTPException(
                 status_code=400,
                 detail=f"order_in_plan passed {payload.order_in_plan} is not valid, "
                 f"the next available sequence is {max_order_in_plan + 1} for updates",
+            )
+
+        # 3.c First time adding an exercise, make sure the order_in_plan = 1;
+        if not max_order_in_plan and payload.order_in_plan > 1:
+            raise HTTPException(
+                status_code=400,
+                detail=f"order_in_plan passed {payload.order_in_plan} is larger than 1",
             )
 
         session = self.repos.session
@@ -148,55 +156,62 @@ def validate_set_number(func: Callable) -> Coroutine[Any, Any, Any]:
                 )
             )
         else:
-            # 1.b Not an update, but it is a creation
+            # 1.b Else; we are adding, verify if it belongs to user
             await self.repos.exercise_plan.find_one_exercise_plan(
                 workout_plan_id=workout_plan_id,
                 user_id=user_id,
                 exercise_plan_id=exercise_plan_id,
             )
 
-        # 2. Get the current maximum order in plan number.
+        # 2. Get the current maximum order in set number.
         max_set_number = await self.repos.session.scalar(
             select(sqlfunc.max(ExerciseSetPlan.set_number)).where(
                 ExerciseSetPlan.exercise_plan_id == exercise_plan_id
             )
         )
 
-        new_order = payload.set_number
-        if old_set_plan and new_order > max_set_number:
+        # 3. Validate the new set number.
+        new_set_number = payload.set_number
+        # 3.a Update Scenario: we are updaing currently existing exercise set plan
+        if old_set_plan and new_set_number > max_set_number:
             raise HTTPException(
                 status_code=400,
-                detail=f"order_in_plan passed {new_order} is not valid, "
-                f"order_in_plan should not exceed {max_set_number}.",
+                detail=f"set_number passed {new_set_number} is not valid, "
+                f"set_number should not exceed {max_set_number}.",
             )
-        
-        # 3. Validate the new set number.
+        # 3.b Create scenario: validate the set_number
         if max_set_number and payload.set_number > (max_set_number + 1):
             raise HTTPException(
                 status_code=400,
                 detail=f"set_number passed {payload.set_number} is not valid, "
-                f"the next available set number is {max_set_number + 1} for updates",
+                f"the next available set number is {max_set_number + 1}",
+            )
+        # 3.c First time adding a set, make sure the set_number = 1
+        if not max_set_number and new_set_number > 1:
+            raise HTTPException(
+                status_code=400,
+                detail=f"set_number passed {new_set_number} is larger than 1",
             )
 
         # when updating, fix order for others
         session = self.repos.session
         if old_set_plan:
             old_order = old_set_plan.set_number
-            if new_order < old_order:
+            if new_set_number < old_order:
                 # Moving item up (e.g., from order 5 to order 2)
                 # Increment order_in_plan for items that were between new_order and old_order-1
                 await session.execute(
                     update(ExerciseSetPlan)
                     .where(
                         ExerciseSetPlan.exercise_plan_id == exercise_plan_id,
-                        ExerciseSetPlan.set_number >= new_order,
+                        ExerciseSetPlan.set_number >= new_set_number,
                         ExerciseSetPlan.set_number < old_order,
                         ExerciseSetPlan.id
                         != exercise_set_plan_id,  # Exclude the target item itself
                     )
                     .values(set_number=ExerciseSetPlan.set_number + 1)
                 )
-            elif new_order > old_order:  # new_order > old_order
+            elif new_set_number > old_order:  # new_order > old_order
                 # Moving item down (e.g., from order 2 to order 5)
                 # Decrement order_in_plan for items that were between old_order+1 and new_order
                 await session.execute(
@@ -204,7 +219,7 @@ def validate_set_number(func: Callable) -> Coroutine[Any, Any, Any]:
                     .where(
                         ExerciseSetPlan.exercise_plan_id == exercise_plan_id,
                         ExerciseSetPlan.set_number > old_order,
-                        ExerciseSetPlan.set_number <= new_order,
+                        ExerciseSetPlan.set_number <= new_set_number,
                         ExerciseSetPlan.id
                         != exercise_set_plan_id,  # Exclude the target item itself
                     )

@@ -2,7 +2,7 @@ TASKS:
 
 - Report endpoint for a workout/session [x]
 
-- Add Dockerization
+- Add Dockerization [x]
     - Dockerfile for backend service
     - docker-compose file for various services:
         - Backend App

@@ -5,6 +5,8 @@ build/
 dist/
 wheels/
 *.egg-info
+redis_data
+postgres_data
 
 # Virtual environments
 .venv
