@@ -1,9 +1,6 @@
 from datetime import datetime
 from typing import Optional
 
-# from app.api.v1.schema.workout_plan import (
-#     ExercisePlanBase,
-# )
 from app.core.common.app_response import AppBaseModel
 from app.models import WorkoutSession, ExerciseResult, ExerciseSetResult
 
@@ -33,7 +30,6 @@ class ExerciseResultBase(AppBaseModel):
     exercise_id: int
     exercise_plan_id: int
 
-    # exercise_plan: Optional[ExercisePlanBase] = None
     exercise_set_results: Optional[list["ExerciseSetResultBase"]] = None
 
     class Meta:

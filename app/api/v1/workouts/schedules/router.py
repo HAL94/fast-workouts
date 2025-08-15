@@ -2,7 +2,7 @@ from datetime import timedelta
 from fastapi import APIRouter, Depends, Query
 import pytz
 
-from app.api.v1.schema.workout_session import WorkoutSessionBase
+from app.api.v1.schema import WorkoutSessionBase
 from app.api.v1.sessions.services.workout_session_service import WorkoutSessionService
 from app.api.v1.workouts.schema import (
     CreateWorkoutScheduleRequest,

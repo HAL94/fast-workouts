@@ -2,7 +2,7 @@ from app.api.v1.sessions.schema import (
     WorkoutSessionPagination,
     WorkoutSessionCreate,
 )
-from app.api.v1.schema.workout_session import (
+from app.api.v1.schema import (
     WorkoutSessionBase,
 )
 from app.models import (
