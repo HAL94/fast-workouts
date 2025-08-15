@@ -29,7 +29,7 @@ A FastAPI server that will track and record workout exercises. This project is f
     - System supports categories of exercises.
 
 - Workout Plans
-    - Create plans for exercises, and sets with details following details:
+    - Create plans for exercises and sets with following details:
         - target repetitions, 
         - target weight and 
         - target exercises duration.
@@ -83,12 +83,12 @@ with your tool of choice or with uv: `uv sync`
 
 # Using Docker
 A `docker-compose.yaml` file is included for various services:
-    - `app`: Backend application.
-    - `migration`: Attempts to apply `alembic` migrations
-    - `seeder`: Applies data seeding.
-    - `postgres`.
-    - `redis`.
-    - `celery`: runs the celery worker.
+- `app`: Backend application.
+- `migration`: Attempts to apply `alembic` migrations
+- `seeder`: Applies data seeding.
+- `postgres`.
+- `redis`.
+- `celery`: runs the celery worker.
 
 1. Ensure the `PG_SERVER` env variable refers to the `postgres` server instead of `localhost`:
 2. Similarly for `REDIS_SERVER`: `redis://redis:6379`
